@@ -42,8 +42,14 @@ public class MusicEditor {
     // Currently selected instrument (default: Acoustic Snare - 38)
     int currentInstrument = 38;
     
-    // Notes for each row (MIDI note numbers)
-    int[] notes = {71, 69, 67, 65, 64, 62, 60}; // SI, LA, SOL, FA, MI, RE, DO
+    // Base notes (C4 to B4 range approximately)
+    int[] baseNotes = {71, 69, 67, 65, 64, 62, 60}; // SI, LA, SOL, FA, MI, RE, DO
+    
+    // Current notes with octave shift applied
+    int[] notes = {71, 69, 67, 65, 64, 62, 60};
+    
+    // Current octave shift (-5 to +4)
+    int currentOctaveShift = 0;
     
     // Current number of beats
     int currentBeats = 16;
@@ -117,7 +123,11 @@ public class MusicEditor {
         // Create WEST panel using GridLayout to put components side by side (left and right)
         JPanel westPanel = new JPanel(new BorderLayout());
         
-        // LEFT side of west panel - Instrument selector
+        // LEFT side of west panel - Combined instrument and octave panel
+        JPanel leftControlPanel = new JPanel();
+        leftControlPanel.setLayout(new BoxLayout(leftControlPanel, BoxLayout.Y_AXIS));
+        
+        // Instrument selector panel
         JPanel instrumentPanel = new JPanel(new BorderLayout());
         instrumentPanel.setBorder(BorderFactory.createTitledBorder("Select Instrument"));
         JComboBox<String> instrumentCombo = new JComboBox<>(instrumentNames);
@@ -127,14 +137,47 @@ public class MusicEditor {
             System.out.println("Instrument changed to: " + instrumentNames[index] + " (ID: " + currentInstrument + ")");
         });
         instrumentPanel.add(instrumentCombo, BorderLayout.CENTER);
-        westPanel.add(BorderLayout.WEST, instrumentPanel);
+        leftControlPanel.add(instrumentPanel);
+        
+        // Add spacing between panels
+        leftControlPanel.add(Box.createVerticalStrut(10));
+        
+        // Octave selector panel (hardwired from -5 to +4)
+        JPanel octavePanel = new JPanel(new BorderLayout());
+        octavePanel.setBorder(BorderFactory.createTitledBorder("Octave Shift"));
+        
+        String[] octaveOptions = {
+            "-5 Octaves", "-4 Octaves", "-3 Octaves", "-2 Octaves", "-1 Octave", 
+            "0 (Default)", 
+            "+1 Octave", "+2 Octaves", "+3 Octaves", "+4 Octaves"
+        };
+        JComboBox<String> octaveCombo = new JComboBox<>(octaveOptions);
+        octaveCombo.setSelectedIndex(5); // Default to 0 (index 5)
+        octaveCombo.addActionListener(e -> {
+            int selectedIndex = octaveCombo.getSelectedIndex();
+            // Convert selection to octave shift (-5 to +4)
+            currentOctaveShift = selectedIndex - 5;
+            updateOctave();
+            System.out.println("Octave shift changed to: " + currentOctaveShift);
+        });
+        
+        // Add a label to show current octave range
+        JLabel octaveInfoLabel = new JLabel("Shift range: -5 to +4 octaves", SwingConstants.CENTER);
+        octaveInfoLabel.setFont(octaveInfoLabel.getFont().deriveFont(10f));
+        
+        octavePanel.add(octaveCombo, BorderLayout.CENTER);
+        octavePanel.add(octaveInfoLabel, BorderLayout.SOUTH);
+        
+        leftControlPanel.add(octavePanel);
+        
+        westPanel.add(BorderLayout.WEST, leftControlPanel);
         
         // RIGHT side of west panel - Note names (with increased width)
         JPanel notesPanel = new JPanel(new GridLayout(7, 1, 5, 5));
         notesPanel.setBorder(BorderFactory.createTitledBorder("Notes"));
         
         // Set preferred width for notes panel
-        notesPanel.setPreferredSize(new Dimension(67, 0));
+        notesPanel.setPreferredSize(new Dimension(120, 0));
         
         for (int i = 0; i < 7; i++) {
             JLabel noteLabel = new JLabel(soundsNames[i], SwingConstants.CENTER);
@@ -184,6 +227,31 @@ public class MusicEditor {
         theFrame.setBounds(50, 50, 800, 500);
         theFrame.pack();
         theFrame.setVisible(true);
+    }
+    
+    private void updateOctave() {
+        // Update the notes array with the current octave shift
+        for (int i = 0; i < baseNotes.length; i++) {
+            notes[i] = baseNotes[i] + (currentOctaveShift * 12);
+        }
+        
+        // Show a message to indicate the change
+        String octaveText = currentOctaveShift == 0 ? "default octave" :
+                           (currentOctaveShift > 0 ? currentOctaveShift + " octave(s) UP" : 
+                            Math.abs(currentOctaveShift) + " octave(s) DOWN");
+        
+        String message = "Octave shifted " + octaveText + "\n" +
+                        "Notes range: " + notes[6] + " to " + notes[0] + " (MIDI values)";
+        
+        JOptionPane.showMessageDialog(theFrame, 
+            message,
+            "Octave Changed",
+            JOptionPane.INFORMATION_MESSAGE);
+        
+        System.out.println("Notes updated with octave shift " + currentOctaveShift + ": ");
+        for (int i = 0; i < notes.length; i++) {
+            System.out.println(soundsNames[i] + ": " + notes[i]);
+        }
     }
     
     private void clearAllCheckboxes() {
@@ -291,7 +359,8 @@ public class MusicEditor {
             sequence = new Sequence(Sequence.PPQ, 4);
             track = sequence.createTrack();
             
-            System.out.println("Building track with " + currentBeats + " beats and instrument ID: " + currentInstrument);
+            System.out.println("Building track with " + currentBeats + " beats, instrument ID: " + currentInstrument + 
+                             ", octave shift: " + currentOctaveShift);
             
             // Set the instrument (program change)
             ShortMessage instrumentMsg = new ShortMessage();
@@ -316,7 +385,7 @@ public class MusicEditor {
                         JCheckBox check = checkboxList.get(checkboxIndex);
                         
                         if (check.isSelected()) {
-                            // Add note on at this beat
+                            // Add note on at this beat using the octave-shifted note
                             ShortMessage noteOn = new ShortMessage();
                             noteOn.setMessage(ShortMessage.NOTE_ON, 0, notes[row], 100);
                             track.add(new MidiEvent(noteOn, beat));
@@ -343,6 +412,7 @@ public class MusicEditor {
             
             System.out.println("Now playing " + currentBeats + " beats with instrument: " + getInstrumentName(currentInstrument));
             System.out.println("Loop from 0 to " + currentBeats);
+            System.out.println("Using octave-shifted notes: " + java.util.Arrays.toString(notes));
             
         } catch (Exception e) {
             e.printStackTrace();
