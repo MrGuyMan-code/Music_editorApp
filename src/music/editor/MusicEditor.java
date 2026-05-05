@@ -13,6 +13,7 @@ package music.editor;
  */
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Label;
 import java.util.ArrayList;
@@ -114,7 +115,7 @@ public class MusicEditor {
         background.add(BorderLayout.NORTH, topPanel);
         
         // Create WEST panel using GridLayout to put components side by side (left and right)
-        JPanel westPanel = new JPanel(new GridLayout(1, 2, 10, 0));
+        JPanel westPanel = new JPanel(new BorderLayout());
         
         // LEFT side of west panel - Instrument selector
         JPanel instrumentPanel = new JPanel(new BorderLayout());
@@ -126,17 +127,24 @@ public class MusicEditor {
             System.out.println("Instrument changed to: " + instrumentNames[index] + " (ID: " + currentInstrument + ")");
         });
         instrumentPanel.add(instrumentCombo, BorderLayout.CENTER);
-        westPanel.add(instrumentPanel);
+        westPanel.add(BorderLayout.WEST, instrumentPanel);
         
-        // RIGHT side of west panel - Note names
+        // RIGHT side of west panel - Note names (with increased width)
         JPanel notesPanel = new JPanel(new GridLayout(7, 1, 5, 5));
         notesPanel.setBorder(BorderFactory.createTitledBorder("Notes"));
+        
+        // Set preferred width for notes panel
+        notesPanel.setPreferredSize(new Dimension(67, 0));
+        
         for (int i = 0; i < 7; i++) {
             JLabel noteLabel = new JLabel(soundsNames[i], SwingConstants.CENTER);
             noteLabel.setFont(noteLabel.getFont().deriveFont(16f));
+            // Add some padding around the text
+            noteLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
             notesPanel.add(noteLabel);
         }
-        westPanel.add(notesPanel);
+        
+        westPanel.add(notesPanel, BorderLayout.CENTER);
         
         background.add(BorderLayout.WEST, westPanel);
         
