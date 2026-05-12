@@ -25,8 +25,8 @@ import javax.swing.*;
 public class MusicEditor {
     
     // UI components for the main editor window
-    JPanel mainContainer; // Holds all partiture panels in a scrollable area
-    ArrayList<PartiturePanel> partiturePanels; // Collection of all musical partitures
+    JPanel mainContainer; // Holds all instrument panels in a scrollable area
+    ArrayList<InstrumentPanel> instrumentPanels; // Collection of all musical instrument panels
     JFrame theFrame;
     
     // Note names for the 7 rows (descending pitch order)
@@ -55,7 +55,7 @@ public class MusicEditor {
         mainContainer = new JPanel(mainLayout);
         mainContainer.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
-        // ===== TOP PANEL: Global controls that affect all partitures =====
+        // ===== TOP PANEL: Global controls that affect all instruments =====
         JPanel globalTopPanel = new JPanel();
         globalTopPanel.add(new JLabel("Global Controls"));
         
@@ -88,16 +88,16 @@ public class MusicEditor {
         
         // Global play/stop buttons
         JButton playAllButton = new JButton("Play All");
-        playAllButton.addActionListener(e -> playAllPartitures());
+        playAllButton.addActionListener(e -> playAllInstruments());
         globalTopPanel.add(playAllButton);
         
         JButton stopAllButton = new JButton("Stop All");
-        stopAllButton.addActionListener(e -> stopAllPartitures());
+        stopAllButton.addActionListener(e -> stopAllInstruments());
         globalTopPanel.add(stopAllButton);
         
         mainContainer.add(BorderLayout.NORTH, globalTopPanel);
         
-        // ===== SCROLLABLE AREA: Holds all individual partiture panels =====
+        // ===== SCROLLABLE AREA: Holds all individual instrument panels =====
         JPanel scrollContent = new JPanel();
         scrollContent.setLayout(new BoxLayout(scrollContent, BoxLayout.Y_AXIS));
         JScrollPane scrollPane = new JScrollPane(scrollContent);
@@ -106,9 +106,9 @@ public class MusicEditor {
         
         mainContainer.add(BorderLayout.CENTER, scrollPane);
         
-        // Initialize collection and add the first partiture
-        partiturePanels = new ArrayList<>();
-        addNewPartiture(scrollContent);
+        // Initialize collection and add the first instrument
+        instrumentPanels = new ArrayList<>();
+        addNewInstrument(scrollContent);
         
         theFrame.getContentPane().add(mainContainer);
         theFrame.setBounds(50, 50, 900, 700);
@@ -116,42 +116,42 @@ public class MusicEditor {
         theFrame.setVisible(true);
     }
     
-    // Creates and adds a new partiture panel to the scrollable area
-    private void addNewPartiture(JPanel scrollContent) {
-        PartiturePanel newPartiture = new PartiturePanel(partiturePanels.size() + 1);
-        partiturePanels.add(newPartiture);
-        scrollContent.add(newPartiture);
+    // Creates and adds a new instrument panel to the scrollable area
+    private void addNewInstrument(JPanel scrollContent) {
+        InstrumentPanel newInstrument = new InstrumentPanel(instrumentPanels.size() + 1);
+        instrumentPanels.add(newInstrument);
+        scrollContent.add(newInstrument);
         scrollContent.add(Box.createVerticalStrut(10)); // Spacing between panels
         scrollContent.revalidate();
         scrollContent.repaint();
     }
     
-    // Applies the same tempo to every partiture
+    // Applies the same tempo to every instrument
     private void setTempoForAll(int bpm) {
-        for (PartiturePanel pp : partiturePanels) {
-            pp.setTempo(bpm);
+        for (InstrumentPanel ip : instrumentPanels) {
+            ip.setTempo(bpm);
         }
-        JOptionPane.showMessageDialog(theFrame, "Tempo changed to " + bpm + " BPM for all partitures");
+        JOptionPane.showMessageDialog(theFrame, "Tempo changed to " + bpm + " BPM for all instruments");
     }
     
-    // Starts playback for all partitures simultaneously
-    private void playAllPartitures() {
-        for (PartiturePanel pp : partiturePanels) {
-            pp.startMusic();
-        }
-    }
-    
-    // Stops playback for all partitures
-    private void stopAllPartitures() {
-        for (PartiturePanel pp : partiturePanels) {
-            pp.stopMusic();
+    // Starts playback for all instruments simultaneously
+    private void playAllInstruments() {
+        for (InstrumentPanel ip : instrumentPanels) {
+            ip.startMusic();
         }
     }
     
-    // Inner class representing a single musical partiture (one instrument's pattern)
-    class PartiturePanel extends JPanel {
-        // Partiture identification and UI components
-        private int partitureId;
+    // Stops playback for all instruments
+    private void stopAllInstruments() {
+        for (InstrumentPanel ip : instrumentPanels) {
+            ip.stopMusic();
+        }
+    }
+    
+    // Inner class representing a single instrument panel (one instrument's pattern)
+    class InstrumentPanel extends JPanel {
+        // Instrument identification and UI components
+        private int instrumentId;
         private JPanel background;
         private JPanel mainPanel;
         private ArrayList<JCheckBox> checkboxList; // Grid of checkboxes (rows x beats)
@@ -173,22 +173,22 @@ public class MusicEditor {
         private JComboBox<String> instrumentCombo;
         private JComboBox<String> octaveCombo;
         
-        public PartiturePanel(int id) {
-            this.partitureId = id;
-            setupPartiture();
+        public InstrumentPanel(int id) {
+            this.instrumentId = id;
+            setupInstrument();
         }
         
-        // Builds the complete UI for a single partiture
-        private void setupPartiture() {
+        // Builds the complete UI for a single instrument
+        private void setupInstrument() {
             setLayout(new BorderLayout());
-            setBorder(BorderFactory.createTitledBorder("Partiture #" + partitureId));
+            setBorder(BorderFactory.createTitledBorder("Instrument #" + instrumentId));
             setPreferredSize(new Dimension(850, 400));
             setMaximumSize(new Dimension(850, 400));
             
             background = new JPanel(new BorderLayout());
             background.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
             
-            // ===== TOP PANEL: Partiture-specific controls =====
+            // ===== TOP PANEL: Instrument-specific controls =====
             JPanel topPanel = new JPanel();
             topPanel.add(new JLabel("Beats:"));
             beatsTextField = new JTextField("16", 4);
@@ -201,14 +201,15 @@ public class MusicEditor {
             clearAllButton.addActionListener(e -> clearAllCheckboxes());
             topPanel.add(clearAllButton);
             
-            JButton removeButton = new JButton("Remove Partiture");
-            removeButton.addActionListener(e -> removeThisPartiture());
+            JButton removeButton = new JButton("Remove Instrument");
+            removeButton.addActionListener(e -> removeThisInstrument());
             topPanel.add(removeButton);
             
             background.add(BorderLayout.NORTH, topPanel);
             
             // ===== WEST PANEL: Instrument selection and note labels =====
             JPanel westPanel = new JPanel(new BorderLayout());
+            JPanel instrumentsAndShiftPanel = new JPanel(new GridLayout(2,1, 0, 10));
             
             // Instrument selector
             JPanel instrumentPanel = new JPanel(new BorderLayout());
@@ -219,7 +220,7 @@ public class MusicEditor {
                 currentInstrument = instruments[index];
             });
             instrumentPanel.add(instrumentCombo, BorderLayout.CENTER);
-            westPanel.add(instrumentPanel, BorderLayout.WEST);
+            instrumentsAndShiftPanel.add(instrumentPanel);
             
             // Octave shift control
             JPanel octavePanel = new JPanel(new BorderLayout());
@@ -235,8 +236,10 @@ public class MusicEditor {
                 currentOctaveShift = selectedIndex - 5;
                 updateOctave(); // Recalculate note pitches
             });
-            octavePanel.add(octaveCombo, BorderLayout.CENTER);
+            octavePanel.add(octaveCombo);
+            instrumentsAndShiftPanel.add(octavePanel);
             
+            westPanel.add(instrumentsAndShiftPanel ,BorderLayout.WEST);
             // Note names panel (7 rows)
             JPanel notesPanel = new JPanel(new GridLayout(7, 1, 5, 5));
             notesPanel.setBorder(BorderFactory.createTitledBorder("Notes"));
@@ -247,7 +250,7 @@ public class MusicEditor {
                 notesPanel.add(noteLabel);
             }
             
-            westPanel.add(notesPanel, BorderLayout.CENTER);
+            westPanel.add(notesPanel, BorderLayout.EAST);
             background.add(BorderLayout.WEST, westPanel);
             
             // ===== EAST PANEL: Playback controls =====
@@ -265,31 +268,31 @@ public class MusicEditor {
             checkboxList = new ArrayList<JCheckBox>();
             createGrid(16);
             
-            // ===== SOUTH PANEL: Button to add more partitures =====
+            // ===== SOUTH PANEL: Button to add more instruments =====
             JPanel southPanel = new JPanel();
-            JButton addPartitureButton = new JButton("+ Add New Partiture Below");
-            addPartitureButton.addActionListener(e -> {
+            JButton addInstrumentButton = new JButton("+ Add New Instrument Below");
+            addInstrumentButton.addActionListener(e -> {
                 JPanel scrollContent = (JPanel) ((JScrollPane) mainContainer.getComponent(1)).getViewport().getView();
-                addNewPartiture(scrollContent);
+                addNewInstrument(scrollContent);
             });
-            southPanel.add(addPartitureButton);
+            southPanel.add(addInstrumentButton);
             background.add(BorderLayout.SOUTH, southPanel);
             
             add(background, BorderLayout.CENTER);
             setUpMidi();
         }
         
-        // Removes this partiture from the editor
-        private void removeThisPartiture() {
+        // Removes this instrument from the editor
+        private void removeThisInstrument() {
             int confirm = JOptionPane.showConfirmDialog(theFrame, 
-                "Remove Partiture #" + partitureId + "?", 
+                "Remove Instrument #" + instrumentId + "?", 
                 "Confirm Removal", 
                 JOptionPane.YES_NO_OPTION);
             if (confirm == JOptionPane.YES_OPTION) {
                 stopMusic(); // Stop playback before removal
                 JPanel scrollContent = (JPanel) ((JScrollPane) mainContainer.getComponent(1)).getViewport().getView();
                 scrollContent.remove(this);
-                partiturePanels.remove(this);
+                instrumentPanels.remove(this);
                 scrollContent.revalidate();
                 scrollContent.repaint();
             }
