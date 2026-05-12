@@ -4,9 +4,6 @@
  */
 package music.editor;
 
-
-
-
 /**
  *
  * @author desktop
@@ -27,38 +24,18 @@ import javax.swing.*;
 
 public class MusicEditor {
     
-    JPanel mainPanel;
-    //Stocam casetele de validare in array list
-    ArrayList<JCheckBox> checkboxList;
-    Sequencer sequencer;
-    Sequence sequence;
-    Track track;
+    // UI components for the main editor window
+    JPanel mainContainer; // Holds all partiture panels in a scrollable area
+    ArrayList<PartiturePanel> partiturePanels; // Collection of all musical partitures
     JFrame theFrame;
     
+    // Note names for the 7 rows (descending pitch order)
     String[] soundsNames = {"SI", "LA", "SOL", "FA", "MI", "RE", "DO"};
     
+    // MIDI instrument numbers (mostly percussion sounds)
     int[] instruments = {35, 42, 46, 38, 49, 39, 50, 60, 70, 72, 64, 56, 58, 47, 67, 63};
     
-    // Currently selected instrument (default: Acoustic Snare - 38)
-    int currentInstrument = 38;
-    
-    // Base notes (C4 to B4 range approximately)
-    int[] baseNotes = {71, 69, 67, 65, 64, 62, 60}; // SI, LA, SOL, FA, MI, RE, DO
-    
-    // Current notes with octave shift applied
-    int[] notes = {71, 69, 67, 65, 64, 62, 60};
-    
-    // Current octave shift (-5 to +4)
-    int currentOctaveShift = 0;
-    
-    // Current number of beats
-    int currentBeats = 16;
-    
-    JTextField beatsTextField;
-    JButton generateButton;
-    JPanel background;
-    
-    // Instrument names for display
+    // Display names for the instrument selector dropdown
     String[] instrumentNames = {
         "Bass Drum (35)", "Closed Hi-Hat (42)", "Open Hi-Hat (46)", "Acoustic Snare (38)",
         "Crash Cymbal (49)", "Hand Clap (39)", "Hi Tom (50)", "Low Bongo (60)",
@@ -70,29 +47,20 @@ public class MusicEditor {
         new MusicEditor().buildGUI();
     }
     
+    // Creates the main application window and all UI components
     public void buildGUI(){
         theFrame = new JFrame("Cyber BeatBox");
         theFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        BorderLayout layout = new BorderLayout();
-        background = new JPanel(layout);
-        background.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        BorderLayout mainLayout = new BorderLayout();
+        mainContainer = new JPanel(mainLayout);
+        mainContainer.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
-        // Create top panel for beat control and tempo
-        JPanel topPanel = new JPanel();
-        topPanel.add(new JLabel("Number of Beats:"));
-        beatsTextField = new JTextField("16", 5);
-        topPanel.add(beatsTextField);
-        generateButton = new JButton("Generate Grid");
-        generateButton.addActionListener(e -> generateNewGrid());
-        topPanel.add(generateButton);
+        // ===== TOP PANEL: Global controls that affect all partitures =====
+        JPanel globalTopPanel = new JPanel();
+        globalTopPanel.add(new JLabel("Global Controls"));
         
-        // Add Clear All button
-        JButton clearAllButton = new JButton("Clear All");
-        clearAllButton.addActionListener(e -> clearAllCheckboxes());
-        topPanel.add(clearAllButton);
-        
-        // Add tempo control to top panel
-        topPanel.add(new JLabel("  Tempo:"));
+        // Tempo control dropdown
+        globalTopPanel.add(new JLabel("  Tempo:"));
         JComboBox<String> tempoCombo = new JComboBox<>(new String[]{"100 BPM", "120 BPM", "140 BPM", "Custom..."});
         tempoCombo.addActionListener(e -> {
             String selected = (String) tempoCombo.getSelectedItem();
@@ -102,7 +70,7 @@ public class MusicEditor {
                     try {
                         int tempo = Integer.parseInt(input);
                         if (tempo >= 40 && tempo <= 240) {
-                            setTempo(tempo);
+                            setTempoForAll(tempo);
                         } else {
                             JOptionPane.showMessageDialog(theFrame, "Tempo must be between 40 and 240 BPM");
                         }
@@ -113,321 +81,368 @@ public class MusicEditor {
                 tempoCombo.setSelectedItem("120 BPM");
             } else {
                 int tempo = Integer.parseInt(selected.split(" ")[0]);
-                setTempo(tempo);
+                setTempoForAll(tempo);
             }
         });
-        topPanel.add(tempoCombo);
+        globalTopPanel.add(tempoCombo);
         
-        background.add(BorderLayout.NORTH, topPanel);
+        // Global play/stop buttons
+        JButton playAllButton = new JButton("Play All");
+        playAllButton.addActionListener(e -> playAllPartitures());
+        globalTopPanel.add(playAllButton);
         
-        // Create WEST panel using GridLayout to put components side by side (left and right)
-        JPanel westPanel = new JPanel(new BorderLayout());
+        JButton stopAllButton = new JButton("Stop All");
+        stopAllButton.addActionListener(e -> stopAllPartitures());
+        globalTopPanel.add(stopAllButton);
         
-        // LEFT side of west panel - Combined instrument and octave panel
-        JPanel leftControlPanel = new JPanel();
-        leftControlPanel.setLayout(new BoxLayout(leftControlPanel, BoxLayout.Y_AXIS));
+        mainContainer.add(BorderLayout.NORTH, globalTopPanel);
         
-        // Instrument selector panel
-        JPanel instrumentPanel = new JPanel(new BorderLayout());
-        instrumentPanel.setBorder(BorderFactory.createTitledBorder("Select Instrument"));
-        JComboBox<String> instrumentCombo = new JComboBox<>(instrumentNames);
-        instrumentCombo.addActionListener(e -> {
-            int index = instrumentCombo.getSelectedIndex();
-            currentInstrument = instruments[index];
-            System.out.println("Instrument changed to: " + instrumentNames[index] + " (ID: " + currentInstrument + ")");
-        });
-        instrumentPanel.add(instrumentCombo, BorderLayout.CENTER);
-        leftControlPanel.add(instrumentPanel);
+        // ===== SCROLLABLE AREA: Holds all individual partiture panels =====
+        JPanel scrollContent = new JPanel();
+        scrollContent.setLayout(new BoxLayout(scrollContent, BoxLayout.Y_AXIS));
+        JScrollPane scrollPane = new JScrollPane(scrollContent);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         
-        // Add spacing between panels
-        leftControlPanel.add(Box.createVerticalStrut(10));
+        mainContainer.add(BorderLayout.CENTER, scrollPane);
         
-        // Octave selector panel (hardwired from -5 to +4)
-        JPanel octavePanel = new JPanel(new BorderLayout());
-        octavePanel.setBorder(BorderFactory.createTitledBorder("Octave Shift"));
+        // Initialize collection and add the first partiture
+        partiturePanels = new ArrayList<>();
+        addNewPartiture(scrollContent);
         
-        String[] octaveOptions = {
-            "-5 Octaves", "-4 Octaves", "-3 Octaves", "-2 Octaves", "-1 Octave", 
-            "0 (Default)", 
-            "+1 Octave", "+2 Octaves", "+3 Octaves", "+4 Octaves"
-        };
-        JComboBox<String> octaveCombo = new JComboBox<>(octaveOptions);
-        octaveCombo.setSelectedIndex(5); // Default to 0 (index 5)
-        octaveCombo.addActionListener(e -> {
-            int selectedIndex = octaveCombo.getSelectedIndex();
-            // Convert selection to octave shift (-5 to +4)
-            currentOctaveShift = selectedIndex - 5;
-            updateOctave();
-            System.out.println("Octave shift changed to: " + currentOctaveShift);
-        });
-        
-        // Add a label to show current octave range
-        JLabel octaveInfoLabel = new JLabel("Shift range: -5 to +4 octaves", SwingConstants.CENTER);
-        octaveInfoLabel.setFont(octaveInfoLabel.getFont().deriveFont(10f));
-        
-        octavePanel.add(octaveCombo, BorderLayout.CENTER);
-        octavePanel.add(octaveInfoLabel, BorderLayout.SOUTH);
-        
-        leftControlPanel.add(octavePanel);
-        
-        westPanel.add(BorderLayout.WEST, leftControlPanel);
-        
-        // RIGHT side of west panel - Note names (with increased width)
-        JPanel notesPanel = new JPanel(new GridLayout(7, 1, 5, 5));
-        notesPanel.setBorder(BorderFactory.createTitledBorder("Notes"));
-        
-        // Set preferred width for notes panel
-        notesPanel.setPreferredSize(new Dimension(120, 0));
-        
-        for (int i = 0; i < 7; i++) {
-            JLabel noteLabel = new JLabel(soundsNames[i], SwingConstants.CENTER);
-            noteLabel.setFont(noteLabel.getFont().deriveFont(16f));
-            // Add some padding around the text
-            noteLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-            notesPanel.add(noteLabel);
-        }
-        
-        westPanel.add(notesPanel, BorderLayout.CENTER);
-        
-        background.add(BorderLayout.WEST, westPanel);
-        
-        // Create right panel for buttons
-        Box buttonBox = new Box(BoxLayout.Y_AXIS);
-        buttonBox.setBorder(BorderFactory.createTitledBorder("Controls"));
-        
-        JButton start = new JButton("Start");
-        start.addActionListener(e -> startMusic());
-        buttonBox.add(start);
-        buttonBox.add(Box.createVerticalStrut(5));
-        
-        JButton stop = new JButton("Stop");
-        stop.addActionListener(e -> stopMusic());
-        buttonBox.add(stop);
-        buttonBox.add(Box.createVerticalStrut(5));
-        
-        JButton serialisation = new JButton("Serialisation");
-        buttonBox.add(serialisation);
-        buttonBox.add(Box.createVerticalStrut(5));
-        
-        JButton restore = new JButton("Restore");
-        buttonBox.add(restore);
-        
-        background.add(BorderLayout.EAST, buttonBox);
-        
-        theFrame.getContentPane().add(background);
-        
-        // Initialize checkboxList BEFORE creating the grid
-        checkboxList = new ArrayList<JCheckBox>();
-        
-        // Create the grid panel in the center
-        createGrid(16);
-        
-        setUpMidi();
-        
-        theFrame.setBounds(50, 50, 800, 500);
-        theFrame.pack();
+        theFrame.getContentPane().add(mainContainer);
+        theFrame.setBounds(50, 50, 900, 700);
+        theFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         theFrame.setVisible(true);
     }
     
-    private void updateOctave() {
-        // Update the notes array with the current octave shift
-        for (int i = 0; i < baseNotes.length; i++) {
-            notes[i] = baseNotes[i] + (currentOctaveShift * 12);
+    // Creates and adds a new partiture panel to the scrollable area
+    private void addNewPartiture(JPanel scrollContent) {
+        PartiturePanel newPartiture = new PartiturePanel(partiturePanels.size() + 1);
+        partiturePanels.add(newPartiture);
+        scrollContent.add(newPartiture);
+        scrollContent.add(Box.createVerticalStrut(10)); // Spacing between panels
+        scrollContent.revalidate();
+        scrollContent.repaint();
+    }
+    
+    // Applies the same tempo to every partiture
+    private void setTempoForAll(int bpm) {
+        for (PartiturePanel pp : partiturePanels) {
+            pp.setTempo(bpm);
         }
-        
-        // Show a message to indicate the change
-        String octaveText = currentOctaveShift == 0 ? "default octave" :
-                           (currentOctaveShift > 0 ? currentOctaveShift + " octave(s) UP" : 
-                            Math.abs(currentOctaveShift) + " octave(s) DOWN");
-        
-        String message = "Octave shifted " + octaveText + "\n" +
-                        "Notes range: " + notes[6] + " to " + notes[0] + " (MIDI values)";
-        
-        JOptionPane.showMessageDialog(theFrame, 
-            message,
-            "Octave Changed",
-            JOptionPane.INFORMATION_MESSAGE);
-        
-        System.out.println("Notes updated with octave shift " + currentOctaveShift + ": ");
-        for (int i = 0; i < notes.length; i++) {
-            System.out.println(soundsNames[i] + ": " + notes[i]);
+        JOptionPane.showMessageDialog(theFrame, "Tempo changed to " + bpm + " BPM for all partitures");
+    }
+    
+    // Starts playback for all partitures simultaneously
+    private void playAllPartitures() {
+        for (PartiturePanel pp : partiturePanels) {
+            pp.startMusic();
         }
     }
     
-    private void clearAllCheckboxes() {
-        if (checkboxList != null) {
-            for (JCheckBox checkBox : checkboxList) {
-                checkBox.setSelected(false);
+    // Stops playback for all partitures
+    private void stopAllPartitures() {
+        for (PartiturePanel pp : partiturePanels) {
+            pp.stopMusic();
+        }
+    }
+    
+    // Inner class representing a single musical partiture (one instrument's pattern)
+    class PartiturePanel extends JPanel {
+        // Partiture identification and UI components
+        private int partitureId;
+        private JPanel background;
+        private JPanel mainPanel;
+        private ArrayList<JCheckBox> checkboxList; // Grid of checkboxes (rows x beats)
+        
+        // MIDI components for playback
+        private Sequencer sequencer;
+        private Sequence sequence;
+        private Track track;
+        
+        // Musical parameters
+        private int currentInstrument = 38; // Default instrument (Acoustic Snare)
+        private int[] baseNotes = {71, 69, 67, 65, 64, 62, 60}; // MIDI notes for 7 rows
+        private int[] notes = {71, 69, 67, 65, 64, 62, 60}; // Notes with octave shift applied
+        private int currentOctaveShift = 0;
+        private int currentBeats = 16; // Number of beats in the pattern
+        
+        // UI controls
+        private JTextField beatsTextField;
+        private JComboBox<String> instrumentCombo;
+        private JComboBox<String> octaveCombo;
+        
+        public PartiturePanel(int id) {
+            this.partitureId = id;
+            setupPartiture();
+        }
+        
+        // Builds the complete UI for a single partiture
+        private void setupPartiture() {
+            setLayout(new BorderLayout());
+            setBorder(BorderFactory.createTitledBorder("Partiture #" + partitureId));
+            setPreferredSize(new Dimension(850, 400));
+            setMaximumSize(new Dimension(850, 400));
+            
+            background = new JPanel(new BorderLayout());
+            background.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+            
+            // ===== TOP PANEL: Partiture-specific controls =====
+            JPanel topPanel = new JPanel();
+            topPanel.add(new JLabel("Beats:"));
+            beatsTextField = new JTextField("16", 4);
+            topPanel.add(beatsTextField);
+            JButton generateButton = new JButton("Generate Grid");
+            generateButton.addActionListener(e -> generateNewGrid());
+            topPanel.add(generateButton);
+            
+            JButton clearAllButton = new JButton("Clear All");
+            clearAllButton.addActionListener(e -> clearAllCheckboxes());
+            topPanel.add(clearAllButton);
+            
+            JButton removeButton = new JButton("Remove Partiture");
+            removeButton.addActionListener(e -> removeThisPartiture());
+            topPanel.add(removeButton);
+            
+            background.add(BorderLayout.NORTH, topPanel);
+            
+            // ===== WEST PANEL: Instrument selection and note labels =====
+            JPanel westPanel = new JPanel(new BorderLayout());
+            
+            // Instrument selector
+            JPanel instrumentPanel = new JPanel(new BorderLayout());
+            instrumentPanel.setBorder(BorderFactory.createTitledBorder("Select Instrument"));
+            instrumentCombo = new JComboBox<>(instrumentNames);
+            instrumentCombo.addActionListener(e -> {
+                int index = instrumentCombo.getSelectedIndex();
+                currentInstrument = instruments[index];
+            });
+            instrumentPanel.add(instrumentCombo, BorderLayout.CENTER);
+            westPanel.add(instrumentPanel, BorderLayout.WEST);
+            
+            // Octave shift control
+            JPanel octavePanel = new JPanel(new BorderLayout());
+            octavePanel.setBorder(BorderFactory.createTitledBorder("Octave Shift"));
+            String[] octaveOptions = {
+                "-5 Octaves", "-4 Octaves", "-3 Octaves", "-2 Octaves", "-1 Octave", 
+                "0 (Default)", "+1 Octave", "+2 Octaves", "+3 Octaves", "+4 Octaves"
+            };
+            octaveCombo = new JComboBox<>(octaveOptions);
+            octaveCombo.setSelectedIndex(5);
+            octaveCombo.addActionListener(e -> {
+                int selectedIndex = octaveCombo.getSelectedIndex();
+                currentOctaveShift = selectedIndex - 5;
+                updateOctave(); // Recalculate note pitches
+            });
+            octavePanel.add(octaveCombo, BorderLayout.CENTER);
+            
+            // Note names panel (7 rows)
+            JPanel notesPanel = new JPanel(new GridLayout(7, 1, 5, 5));
+            notesPanel.setBorder(BorderFactory.createTitledBorder("Notes"));
+            notesPanel.setPreferredSize(new Dimension(70, 0));
+            for (int i = 0; i < 7; i++) {
+                JLabel noteLabel = new JLabel(soundsNames[i], SwingConstants.CENTER);
+                noteLabel.setFont(noteLabel.getFont().deriveFont(14f));
+                notesPanel.add(noteLabel);
             }
-            System.out.println("Cleared all checkboxes");
-        }
-    }
-    
-    private void createGrid(int beats) {
-        // Remove old grid if it exists
-        if (mainPanel != null) {
-            background.remove(mainPanel);
-        }
-        
-        // Create new grid layout
-        GridLayout grid = new GridLayout(7, beats);
-        grid.setVgap(2);
-        grid.setHgap(2);
-        mainPanel = new JPanel(grid);
-        mainPanel.setBorder(BorderFactory.createTitledBorder("Beat Matrix (" + beats + " beats)"));
-        
-        // Clear and recreate checkbox list
-        if (checkboxList == null) {
+            
+            westPanel.add(notesPanel, BorderLayout.CENTER);
+            background.add(BorderLayout.WEST, westPanel);
+            
+            // ===== EAST PANEL: Playback controls =====
+            Box buttonBox = new Box(BoxLayout.Y_AXIS);
+            buttonBox.setBorder(BorderFactory.createTitledBorder("Playback"));
+            JButton start = new JButton("Start");
+            start.addActionListener(e -> startMusic());
+            buttonBox.add(start);
+            JButton stop = new JButton("Stop");
+            stop.addActionListener(e -> stopMusic());
+            buttonBox.add(stop);
+            background.add(BorderLayout.EAST, buttonBox);
+            
+            // Initialize the beat matrix grid
             checkboxList = new ArrayList<JCheckBox>();
-        } else {
-            checkboxList.clear();
+            createGrid(16);
+            
+            // ===== SOUTH PANEL: Button to add more partitures =====
+            JPanel southPanel = new JPanel();
+            JButton addPartitureButton = new JButton("+ Add New Partiture Below");
+            addPartitureButton.addActionListener(e -> {
+                JPanel scrollContent = (JPanel) ((JScrollPane) mainContainer.getComponent(1)).getViewport().getView();
+                addNewPartiture(scrollContent);
+            });
+            southPanel.add(addPartitureButton);
+            background.add(BorderLayout.SOUTH, southPanel);
+            
+            add(background, BorderLayout.CENTER);
+            setUpMidi();
         }
         
-        // Create new checkboxes
-        for (int i = 0; i < beats * 7; i++) {
-            JCheckBox c = new JCheckBox();
-            c.setSelected(false);
-            checkboxList.add(c);
-            mainPanel.add(c);
-        }
-        
-        // Add the grid to the center of background
-        background.add(BorderLayout.CENTER, mainPanel);
-        
-        // Force repaint and revalidate
-        background.revalidate();
-        background.repaint();
-        theFrame.revalidate();
-        theFrame.repaint();
-        
-        currentBeats = beats;
-        System.out.println("Created new grid with " + beats + " beats");
-        
-        // Pack the frame to adjust size
-        theFrame.pack();
-    }
-    
-    private void generateNewGrid() {
-        try {
-            int beats = Integer.parseInt(beatsTextField.getText().trim());
-            if (beats < 1) {
-                JOptionPane.showMessageDialog(theFrame, "Number of beats must be at least 1");
-                return;
-            }
-            if (beats > 64) {
-                JOptionPane.showMessageDialog(theFrame, "Number of beats cannot exceed 64 (performance reasons)");
-                return;
-            }
-            createGrid(beats);
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(theFrame, "Please enter a valid number");
-        }
-    }
-    
-    private String getInstrumentName(int instrument) {
-        for (int i = 0; i < instruments.length; i++) {
-            if (instruments[i] == instrument) {
-                return instrumentNames[i];
+        // Removes this partiture from the editor
+        private void removeThisPartiture() {
+            int confirm = JOptionPane.showConfirmDialog(theFrame, 
+                "Remove Partiture #" + partitureId + "?", 
+                "Confirm Removal", 
+                JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                stopMusic(); // Stop playback before removal
+                JPanel scrollContent = (JPanel) ((JScrollPane) mainContainer.getComponent(1)).getViewport().getView();
+                scrollContent.remove(this);
+                partiturePanels.remove(this);
+                scrollContent.revalidate();
+                scrollContent.repaint();
             }
         }
-        return "Unknown Instrument";
-    }
-    
-    private void setTempo(int bpm) {
-        if (sequencer != null && sequencer.isOpen()) {
-            sequencer.setTempoInBPM(bpm);
-            JOptionPane.showMessageDialog(theFrame, "Tempo changed to " + bpm + " BPM");
+        
+        // Applies octave shift to all notes (12 semitones per octave)
+        private void updateOctave() {
+            for (int i = 0; i < baseNotes.length; i++) {
+                notes[i] = baseNotes[i] + (currentOctaveShift * 12);
+            }
         }
-    }
-    
-    public void setUpMidi(){
-        try{
-            sequencer = MidiSystem.getSequencer();
-            sequencer.open();
-            sequencer.setTempoInBPM(120);
-        } catch(Exception e) {e.printStackTrace();}
-    }
-    
-    public void buildTrackAndStart() {
-        try {
-            // Stop any current playback
-            if (sequencer.isRunning()) {
-                sequencer.stop();
+        
+        // Unchecks all checkboxes in the beat matrix
+        private void clearAllCheckboxes() {
+            if (checkboxList != null) {
+                for (JCheckBox checkBox : checkboxList) {
+                    checkBox.setSelected(false);
+                }
+            }
+        }
+        
+        // Creates the beat matrix grid with specified number of beats
+        private void createGrid(int beats) {
+            if (mainPanel != null) {
+                background.remove(mainPanel);
             }
             
-            // Create new sequence and track - using 4 ticks per quarter note
-            sequence = new Sequence(Sequence.PPQ, 4);
-            track = sequence.createTrack();
+            GridLayout grid = new GridLayout(7, beats); // 7 rows (notes) x beats columns
+            grid.setVgap(2);
+            grid.setHgap(2);
+            mainPanel = new JPanel(grid);
+            mainPanel.setBorder(BorderFactory.createTitledBorder("Beat Matrix (" + beats + " beats)"));
             
-            System.out.println("Building track with " + currentBeats + " beats, instrument ID: " + currentInstrument + 
-                             ", octave shift: " + currentOctaveShift);
-            
-            // Set the instrument (program change)
-            ShortMessage instrumentMsg = new ShortMessage();
-            instrumentMsg.setMessage(ShortMessage.PROGRAM_CHANGE, 0, currentInstrument, 0);
-            track.add(new MidiEvent(instrumentMsg, 0));
-            
-            // Add silent notes at the end of each row to ensure full duration
-            for (int row = 0; row < 7; row++) {
-                // Add a silent note (volume 0) at the last beat to mark the end
-                ShortMessage silentNote = new ShortMessage();
-                silentNote.setMessage(ShortMessage.NOTE_ON, 0, notes[row], 0);
-                track.add(new MidiEvent(silentNote, currentBeats));
+            if (checkboxList == null) {
+                checkboxList = new ArrayList<JCheckBox>();
+            } else {
+                checkboxList.clear();
             }
             
-            // Loop through all beats (0 to currentBeats-1)
-            for (int beat = 0; beat < currentBeats; beat++) {
-                // Loop through all 7 rows
+            // Create checkboxes: row-major order (row 0 all beats, then row 1, etc.)
+            for (int i = 0; i < beats * 7; i++) {
+                JCheckBox c = new JCheckBox();
+                c.setSelected(false);
+                checkboxList.add(c);
+                mainPanel.add(c);
+            }
+            
+            background.add(BorderLayout.CENTER, mainPanel);
+            background.revalidate();
+            background.repaint();
+            currentBeats = beats;
+        }
+        
+        // Regenerates the grid with new beat count from text field
+        private void generateNewGrid() {
+            try {
+                int beats = Integer.parseInt(beatsTextField.getText().trim());
+                if (beats < 1) {
+                    JOptionPane.showMessageDialog(theFrame, "Number of beats must be at least 1");
+                    return;
+                }
+                if (beats > 64) {
+                    JOptionPane.showMessageDialog(theFrame, "Number of beats cannot exceed 64");
+                    return;
+                }
+                createGrid(beats);
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(theFrame, "Please enter a valid number");
+            }
+        }
+        
+        // Initializes the MIDI sequencer for playback
+        private void setUpMidi() {
+            try {
+                sequencer = MidiSystem.getSequencer();
+                sequencer.open();
+                sequencer.setTempoInBPM(120);
+            } catch(Exception e) {e.printStackTrace();}
+        }
+        
+        // Builds the MIDI track from checkbox selections and starts playback
+        private void buildTrackAndStart() {
+            try {
+                if (sequencer.isRunning()) {
+                    sequencer.stop();
+                }
+                
+                sequence = new Sequence(Sequence.PPQ, 4); // PPQ = Pulses Per Quarter note
+                track = sequence.createTrack();
+                
+                // Set the instrument (program change)
+                ShortMessage instrumentMsg = new ShortMessage();
+                instrumentMsg.setMessage(ShortMessage.PROGRAM_CHANGE, 0, currentInstrument, 0);
+                track.add(new MidiEvent(instrumentMsg, 0));
+                
+                // Add silent note at end to ensure all notes stop
                 for (int row = 0; row < 7; row++) {
-                    // Get the checkbox for this beat and row
-                    int checkboxIndex = (row * currentBeats) + beat;
-                    if (checkboxIndex < checkboxList.size()) {
-                        JCheckBox check = checkboxList.get(checkboxIndex);
-                        
-                        if (check.isSelected()) {
-                            // Add note on at this beat using the octave-shifted note
-                            ShortMessage noteOn = new ShortMessage();
-                            noteOn.setMessage(ShortMessage.NOTE_ON, 0, notes[row], 100);
-                            track.add(new MidiEvent(noteOn, beat));
-                            
-                            // Add note off at beat + 1 (lasts for 1 beat)
-                            ShortMessage noteOff = new ShortMessage();
-                            noteOff.setMessage(ShortMessage.NOTE_OFF, 0, notes[row], 100);
-                            track.add(new MidiEvent(noteOff, beat + 1));
+                    ShortMessage silentNote = new ShortMessage();
+                    silentNote.setMessage(ShortMessage.NOTE_ON, 0, notes[row], 0);
+                    track.add(new MidiEvent(silentNote, currentBeats));
+                }
+                
+                // Iterate through each beat and row to add notes for checked checkboxes
+                for (int beat = 0; beat < currentBeats; beat++) {
+                    for (int row = 0; row < 7; row++) {
+                        int checkboxIndex = (row * currentBeats) + beat;
+                        if (checkboxIndex < checkboxList.size()) {
+                            JCheckBox check = checkboxList.get(checkboxIndex);
+                            if (check.isSelected()) {
+                                // Note ON event
+                                ShortMessage noteOn = new ShortMessage();
+                                noteOn.setMessage(ShortMessage.NOTE_ON, 0, notes[row], 100);
+                                track.add(new MidiEvent(noteOn, beat));
+                                
+                                // Note OFF event (1 beat later)
+                                ShortMessage noteOff = new ShortMessage();
+                                noteOff.setMessage(ShortMessage.NOTE_OFF, 0, notes[row], 100);
+                                track.add(new MidiEvent(noteOff, beat + 1));
+                            }
                         }
                     }
                 }
+                
+                // Configure and start the sequencer with looping
+                sequencer.setSequence(sequence);
+                sequencer.setLoopStartPoint(0);
+                sequencer.setLoopEndPoint(currentBeats);
+                sequencer.setLoopCount(Sequencer.LOOP_CONTINUOUSLY);
+                sequencer.start();
+            
+            } catch (Exception e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(theFrame, "Error playing music: " + e.getMessage());
             }
-            
-            // Load sequence into sequencer
-            sequencer.setSequence(sequence);
-            
-            // Set loop from beginning to the end of the sequence (currentBeats)
-            sequencer.setLoopStartPoint(0);
-            sequencer.setLoopEndPoint(currentBeats);
-            sequencer.setLoopCount(Sequencer.LOOP_CONTINUOUSLY);
-            
-            // Start playing
-            sequencer.start();
-            
-            System.out.println("Now playing " + currentBeats + " beats with instrument: " + getInstrumentName(currentInstrument));
-            System.out.println("Loop from 0 to " + currentBeats);
-            System.out.println("Using octave-shifted notes: " + java.util.Arrays.toString(notes));
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(theFrame, "Error playing music: " + e.getMessage());
         }
-    }
-    
-    public void startMusic() {
-        buildTrackAndStart();
-    }
-    
-    public void stopMusic() {
-        if (sequencer != null && sequencer.isRunning()) {
-            sequencer.stop();
-            System.out.println("Music stopped");
+        
+        // Public method to start music playback
+        public void startMusic() {
+            buildTrackAndStart();
+        }
+        
+        // Public method to stop music playback
+        public void stopMusic() {
+            if (sequencer != null && sequencer.isRunning()) {
+                sequencer.stop();
+            }
+        }
+        
+        // Public method to change tempo
+        public void setTempo(int bpm) {
+            if (sequencer != null && sequencer.isOpen()) {
+                sequencer.setTempoInBPM(bpm);
+            }
         }
     }
 }
