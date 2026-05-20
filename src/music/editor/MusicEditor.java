@@ -138,8 +138,16 @@ public class MusicEditor {
         JPanel scrollContent = new JPanel();
         scrollContent.setLayout(new BoxLayout(scrollContent, BoxLayout.Y_AXIS));
         JScrollPane scrollPane = new JScrollPane(scrollContent);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.getVerticalScrollBar().setUI(new SteamScrollBarUI());
+        //scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.getHorizontalScrollBar().setUI(new SteamScrollBarUI());
+        //scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        
+        scrollPane.setBorder(null);
+
+        scrollPane.getViewport().setBackground(
+            new Color(27, 40, 56)
+        );
         
         addPartitureButton.addActionListener(e -> {addNewPartiture(scrollContent);});
         

@@ -123,187 +123,324 @@ import java.awt.event.MouseMotionAdapter;
         
         // Builds the complete UI for a single instrument
         private void setupInstrument() {
-            setLayout(new BorderLayout());
-            
-            setBackground(steamDark);
-            
-            //setBorder(BorderFactory.createTitledBorder("Instrument #" + instrumentId));
-            
-            setBorder(
-                BorderFactory.createTitledBorder(
-                    BorderFactory.createLineBorder(steamBorder),
-                    "Instrument #" + instrumentId,
-                    0,
-                    0,
-                    null,
-                    creamText
-                )
-            );
-            
-            setPreferredSize(new Dimension(850, 400));
-            setMaximumSize(new Dimension(850, 400));
-            
-            background = new JPanel(new BorderLayout());
-            background.setBackground(steamDark);
-            background.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-            
-            // ===== TOP PANEL: Instrument-specific controls =====
-            JPanel topPanel = new JPanel();
 
-            topPanel.setBackground(steamDark);
+           setLayout(new BorderLayout());
 
-            JLabel beatsLabel = new JLabel("Beats:");
+           setBackground(steamDark);
 
-            beatsLabel.setForeground(creamText);
+           setBorder(
+               BorderFactory.createTitledBorder(
+                   BorderFactory.createLineBorder(steamBorder),
+                   "Instrument #" + instrumentId,
+                   0,
+                   0,
+                   null,
+                   creamText
+               )
+           );
 
-            topPanel.add(beatsLabel);
+           setPreferredSize(new Dimension(850, 400));
+           setMaximumSize(new Dimension(850, 400));
 
-            beatsTextField = new JTextField("16", 4);
+           background = new JPanel(new BorderLayout());
 
-            beatsTextField.setBackground(steamLight);
+           background.setBackground(steamDark);
 
-            beatsTextField.setForeground(creamText);
+           background.setBorder(
+               BorderFactory.createEmptyBorder(5, 5, 5, 5)
+           );
 
-            beatsTextField.setCaretColor(creamText);
+           // ===== TOP PANEL =====
 
-            beatsTextField.setBorder(
-                BorderFactory.createLineBorder(steamBorder)
-            );
+           JPanel topPanel = new JPanel();
 
-            topPanel.add(beatsTextField);
-            
-            // ===== WEST PANEL: Instrument selection and note labels =====
-            JPanel westPanel = new JPanel(new BorderLayout());
-            JPanel instrumentsAndShiftPanel = new JPanel(new GridLayout(2,1, 0, 10));            
-            westPanel.setBackground(steamDark);
-            
-            // Instrument selector
-            JPanel instrumentPanel = new JPanel(new BorderLayout());
-            //instrumentPanel.setBorder(BorderFactory.createTitledBorder("Select Instrument"));
-            
-            instrumentPanel.setBorder(
-                BorderFactory.createTitledBorder(
-                    BorderFactory.createLineBorder(steamBorder),
-                    "Select Instrument",
-                    0,
-                    0,
-                    null,
-                    creamText
-                )
-            );
-            
-            instrumentCombo = new JComboBox<>(instrumentNames);
-            instrumentCombo.addActionListener(e -> {
-                int index = instrumentCombo.getSelectedIndex();
-                currentInstrument = instruments[index];
-            });
-            instrumentPanel.add(instrumentCombo, BorderLayout.CENTER);
-            instrumentPanel.setBackground(steamDark);
-            instrumentsAndShiftPanel.add(instrumentPanel);
-            
-            // Octave shift control
-            JPanel octavePanel = new JPanel(new BorderLayout());
-            
-            octavePanel.setBackground(steamDark);
-            
-            
-            octavePanel.setBorder(
-                BorderFactory.createTitledBorder(
-                    BorderFactory.createLineBorder(steamBorder),
-                    "Octave Shift",
-                    0,
-                    0,
-                    null,
-                    creamText
-                )
-            );
-            
-            String[] octaveOptions = {
-                "-5 Octaves", "-4 Octaves", "-3 Octaves", "-2 Octaves", "-1 Octave", 
-                "0 (Default)", "+1 Octave", "+2 Octaves", "+3 Octaves", "+4 Octaves"
-            };
-            octaveCombo = new JComboBox<>(octaveOptions);
-            octaveCombo.setSelectedIndex(5);
-            octaveCombo.addActionListener(e -> {
-                int selectedIndex = octaveCombo.getSelectedIndex();
-                currentOctaveShift = selectedIndex - 5;
-                updateOctave(); // Recalculate note pitches
-            });
-            octavePanel.add(octaveCombo);
-            instrumentsAndShiftPanel.add(octavePanel);
-            
-            instrumentsAndShiftPanel.setBackground(steamDark);
-            
-            westPanel.add(instrumentsAndShiftPanel ,BorderLayout.WEST);
-            // Note names panel (7 rows)
-            JPanel notesPanel = new JPanel(new GridLayout(7, 1, 5, 5));
-            
-            
-            notesPanel.setBorder(
-                BorderFactory.createTitledBorder(
-                    BorderFactory.createLineBorder(steamBorder),
-                    "Notes",
-                    0,
-                    0,
-                    null,
-                    creamText
-                )
-            );
-            
-            notesPanel.setPreferredSize(new Dimension(67, 0));
-            
-            notesPanel.setBackground(steamDark);
-            
-            for (int i = 0; i < 7; i++) {
-                JLabel noteLabel = new JLabel(soundsNames[i], SwingConstants.CENTER);
-                noteLabel.setForeground(creamText);
-                noteLabel.setFont(noteLabel.getFont().deriveFont(14f));
-                notesPanel.add(noteLabel);
-            }
-            
-            westPanel.add(notesPanel, BorderLayout.EAST);
-            background.add(BorderLayout.WEST, westPanel);
-            
-            // ===== EAST PANEL: Playback controls =====
-            Box buttonBox = new Box(BoxLayout.Y_AXIS);
-            
-            buttonBox.setBorder(
-                BorderFactory.createTitledBorder(
-                    BorderFactory.createLineBorder(steamBorder),
-                    "Playback",
-                    0,
-                    0,
-                    null,
-                    creamText
-                )
-            );
-            
-            JButton start = new JButton("Start");
-            start.addActionListener(e -> startMusic());
-            
-            start.setBackground(steamLight);
-            start.setForeground(creamText);      
-            start.setFocusPainted(false);
-            
-            buttonBox.add(start);
-            JButton stop = new JButton("Stop");
-            stop.addActionListener(e -> stopMusic());
-            
-            stop.setBackground(steamLight);
-            stop.setForeground(creamText);      
-            stop.setFocusPainted(false);
-            
-            buttonBox.add(stop);
-            background.add(BorderLayout.EAST, buttonBox);
-            
-            // Initialize the beat matrix grid
-            checkboxList = new ArrayList<JCheckBox>();
-            createGrid(16);
-            
-            
-            add(background, BorderLayout.CENTER);
-            setUpMidi();
-        }
+           topPanel.setBackground(steamDark);
+
+           JLabel beatsLabel = new JLabel("Beats:");
+
+           beatsLabel.setForeground(creamText);
+
+           topPanel.add(beatsLabel);
+
+           beatsTextField = new JTextField("16", 4);
+
+           beatsTextField.setBackground(steamLight);
+
+           beatsTextField.setForeground(creamText);
+
+           beatsTextField.setCaretColor(creamText);
+
+           beatsTextField.setBorder(
+               BorderFactory.createLineBorder(steamBorder)
+           );
+
+           topPanel.add(beatsTextField);
+
+           // GENERATE BUTTON
+
+           JButton generateButton =
+               new JButton("Generate Grid");
+
+           generateButton.addActionListener(e -> generateNewGrid());
+
+           generateButton.setBackground(steamLight);
+
+           generateButton.setForeground(creamText);
+
+           generateButton.setFocusPainted(false);
+
+           topPanel.add(generateButton);
+
+           // CLEAR BUTTON
+
+           JButton clearAllButton =
+               new JButton("Clear All");
+
+           clearAllButton.addActionListener(
+               e -> clearAllCheckboxes()
+           );
+
+           clearAllButton.setBackground(steamLight);
+
+           clearAllButton.setForeground(creamText);
+
+           clearAllButton.setFocusPainted(false);
+
+           topPanel.add(clearAllButton);
+
+           // REMOVE BUTTON
+
+           JButton removeButton =
+               new JButton("Remove Instrument");
+
+           removeButton.addActionListener(
+               e -> removeThisInstrument()
+           );
+
+           removeButton.setBackground(steamLight);
+
+           removeButton.setForeground(creamText);
+
+           removeButton.setFocusPainted(false);
+
+           topPanel.add(removeButton);
+
+           background.add(BorderLayout.NORTH, topPanel);
+
+           // ===== WEST PANEL =====
+
+           JPanel westPanel =
+               new JPanel(new BorderLayout());
+
+           westPanel.setBackground(steamDark);
+
+           JPanel instrumentsAndShiftPanel =
+               new JPanel(new GridLayout(2, 1, 0, 10));
+
+           instrumentsAndShiftPanel.setBackground(
+               steamDark
+           );
+
+           // INSTRUMENT PANEL
+
+           JPanel instrumentPanel =
+               new JPanel(new BorderLayout());
+
+           instrumentPanel.setBackground(steamDark);
+
+           instrumentPanel.setBorder(
+               BorderFactory.createTitledBorder(
+                   BorderFactory.createLineBorder(
+                       steamBorder
+                   ),
+                   "Select Instrument",
+                   0,
+                   0,
+                   null,
+                   creamText
+               )
+           );
+
+           instrumentCombo = new JComboBox<>(instrumentNames);
+
+           instrumentCombo.addActionListener(e -> {
+
+               int index =
+                   instrumentCombo.getSelectedIndex();
+
+               currentInstrument =
+                   instruments[index];
+           });
+
+           instrumentPanel.add(
+               instrumentCombo,
+               BorderLayout.CENTER
+           );
+
+           instrumentsAndShiftPanel.add(
+               instrumentPanel
+           );
+
+           // OCTAVE PANEL
+
+           JPanel octavePanel =
+               new JPanel(new BorderLayout());
+
+           octavePanel.setBackground(steamDark);
+
+           octavePanel.setBorder(
+               BorderFactory.createTitledBorder(
+                   BorderFactory.createLineBorder(
+                       steamBorder
+                   ),
+                   "Octave Shift",
+                   0,
+                   0,
+                   null,
+                   creamText
+               )
+           );
+
+           String[] octaveOptions = {
+               "-5 Octaves", "-4 Octaves", "-3 Octaves", "-2 Octaves", "-1 Octave",
+               "0 (Default)", "+1 Octave", "+2 Octaves", "+3 Octaves","+4 Octaves"};
+
+           octaveCombo =
+               new JComboBox<>(octaveOptions);
+
+           octaveCombo.setSelectedIndex(5);
+
+           octaveCombo.addActionListener(e -> {
+
+               int selectedIndex =
+                   octaveCombo.getSelectedIndex();
+
+               currentOctaveShift =
+                   selectedIndex - 5;
+
+               updateOctave();
+           });
+
+           octavePanel.add(octaveCombo);
+
+           instrumentsAndShiftPanel.add(octavePanel);
+
+           westPanel.add(
+               instrumentsAndShiftPanel,
+               BorderLayout.WEST
+           );
+
+           // NOTES PANEL
+
+           JPanel notesPanel =
+               new JPanel(new GridLayout(7, 1, 5, 5));
+
+           notesPanel.setBackground(steamDark);
+
+           notesPanel.setPreferredSize(
+               new Dimension(67, 0)
+           );
+
+           notesPanel.setBorder(
+               BorderFactory.createTitledBorder(
+                   BorderFactory.createLineBorder(
+                       steamBorder
+                   ),
+                   "Notes",
+                   0,
+                   0,
+                   null,
+                   creamText
+               )
+           );
+
+           for (int i = 0; i < 7; i++) {
+
+               JLabel noteLabel =
+                   new JLabel(
+                       soundsNames[i],
+                       SwingConstants.CENTER
+                   );
+
+               noteLabel.setForeground(creamText);
+
+               noteLabel.setFont(
+                   noteLabel.getFont().deriveFont(14f)
+               );
+
+               notesPanel.add(noteLabel);
+           }
+
+           westPanel.add(
+               notesPanel,
+               BorderLayout.EAST
+           );
+
+           background.add(
+               BorderLayout.WEST,
+               westPanel
+           );
+
+           // ===== PLAYBACK =====
+
+           Box buttonBox =
+               new Box(BoxLayout.Y_AXIS);
+
+           buttonBox.setBackground(steamDark);
+
+           buttonBox.setBorder(
+               BorderFactory.createTitledBorder(
+                   BorderFactory.createLineBorder(
+                       steamBorder
+                   ),
+                   "Playback",
+                   0,
+                   0,
+                   null,
+                   creamText
+               )
+           );
+
+           JButton start = new JButton("Start");
+
+           start.addActionListener(e -> startMusic());
+
+           start.setBackground(steamLight);
+
+           start.setForeground(creamText);
+
+           start.setFocusPainted(false);
+
+           buttonBox.add(start);
+
+           JButton stop = new JButton("Stop");
+
+           stop.addActionListener(e -> stopMusic());
+
+           stop.setBackground(steamLight);
+
+           stop.setForeground(creamText);
+
+           stop.setFocusPainted(false);
+
+           buttonBox.add(stop);
+
+           background.add(
+               BorderLayout.EAST,
+               buttonBox
+           );
+
+           // ===== GRID =====
+
+           checkboxList =
+               new ArrayList<JCheckBox>();
+
+           createGrid(16);
+
+           add(background, BorderLayout.CENTER);
+
+           setUpMidi();
+       }
         
         // Removes this instrument from the editor
         private void removeThisInstrument() {
