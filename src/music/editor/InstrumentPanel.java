@@ -37,6 +37,16 @@ import java.awt.event.MouseMotionAdapter;
  */
     // Inner class representing a single instrument panel (one instrument's pattern)
     class InstrumentPanel extends JPanel {
+        
+        // STEAM THEME COLORS
+        private final Color steamDark = new Color(27, 40, 56);
+
+        private final Color steamLight = new Color(45, 65, 85);
+
+        private final Color steamBorder = new Color(90, 110, 130);
+
+        private final Color creamText = new Color(245, 235, 210);
+        
         // Instrument identification and UI components
         private int instrumentId;
         private JPanel background;
@@ -96,6 +106,7 @@ import java.awt.event.MouseMotionAdapter;
             "Low Wood Block (63)"
         };
         
+        
         private class NoteCell {
 
             boolean active = false;
@@ -106,57 +117,107 @@ import java.awt.event.MouseMotionAdapter;
 
             this.instrumentId = id;
             this.parentPartiture = parent;
-
+            this.setBackground(steamDark);
             setupInstrument();
         }
         
         // Builds the complete UI for a single instrument
         private void setupInstrument() {
             setLayout(new BorderLayout());
-            setBorder(BorderFactory.createTitledBorder("Instrument #" + instrumentId));
+            
+            setBackground(steamDark);
+            
+            //setBorder(BorderFactory.createTitledBorder("Instrument #" + instrumentId));
+            
+            setBorder(
+                BorderFactory.createTitledBorder(
+                    BorderFactory.createLineBorder(steamBorder),
+                    "Instrument #" + instrumentId,
+                    0,
+                    0,
+                    null,
+                    creamText
+                )
+            );
+            
             setPreferredSize(new Dimension(850, 400));
             setMaximumSize(new Dimension(850, 400));
             
             background = new JPanel(new BorderLayout());
+            background.setBackground(steamDark);
             background.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
             
             // ===== TOP PANEL: Instrument-specific controls =====
             JPanel topPanel = new JPanel();
-            topPanel.add(new JLabel("Beats:"));
+
+            topPanel.setBackground(steamDark);
+
+            JLabel beatsLabel = new JLabel("Beats:");
+
+            beatsLabel.setForeground(creamText);
+
+            topPanel.add(beatsLabel);
+
             beatsTextField = new JTextField("16", 4);
+
+            beatsTextField.setBackground(steamLight);
+
+            beatsTextField.setForeground(creamText);
+
+            beatsTextField.setCaretColor(creamText);
+
+            beatsTextField.setBorder(
+                BorderFactory.createLineBorder(steamBorder)
+            );
+
             topPanel.add(beatsTextField);
-            JButton generateButton = new JButton("Generate Grid");
-            generateButton.addActionListener(e -> generateNewGrid());
-            topPanel.add(generateButton);
-            
-            JButton clearAllButton = new JButton("Clear All");
-            clearAllButton.addActionListener(e -> clearAllCheckboxes());
-            topPanel.add(clearAllButton);
-            
-            JButton removeButton = new JButton("Remove Instrument");
-            removeButton.addActionListener(e -> removeThisInstrument());
-            topPanel.add(removeButton);
-            
-            background.add(BorderLayout.NORTH, topPanel);
             
             // ===== WEST PANEL: Instrument selection and note labels =====
             JPanel westPanel = new JPanel(new BorderLayout());
-            JPanel instrumentsAndShiftPanel = new JPanel(new GridLayout(2,1, 0, 10));
+            JPanel instrumentsAndShiftPanel = new JPanel(new GridLayout(2,1, 0, 10));            
+            westPanel.setBackground(steamDark);
             
             // Instrument selector
             JPanel instrumentPanel = new JPanel(new BorderLayout());
-            instrumentPanel.setBorder(BorderFactory.createTitledBorder("Select Instrument"));
+            //instrumentPanel.setBorder(BorderFactory.createTitledBorder("Select Instrument"));
+            
+            instrumentPanel.setBorder(
+                BorderFactory.createTitledBorder(
+                    BorderFactory.createLineBorder(steamBorder),
+                    "Select Instrument",
+                    0,
+                    0,
+                    null,
+                    creamText
+                )
+            );
+            
             instrumentCombo = new JComboBox<>(instrumentNames);
             instrumentCombo.addActionListener(e -> {
                 int index = instrumentCombo.getSelectedIndex();
                 currentInstrument = instruments[index];
             });
             instrumentPanel.add(instrumentCombo, BorderLayout.CENTER);
+            instrumentPanel.setBackground(steamDark);
             instrumentsAndShiftPanel.add(instrumentPanel);
             
             // Octave shift control
             JPanel octavePanel = new JPanel(new BorderLayout());
-            octavePanel.setBorder(BorderFactory.createTitledBorder("Octave Shift"));
+            
+            octavePanel.setBackground(steamDark);
+            
+            
+            octavePanel.setBorder(
+                BorderFactory.createTitledBorder(
+                    BorderFactory.createLineBorder(steamBorder),
+                    "Octave Shift",
+                    0,
+                    0,
+                    null,
+                    creamText
+                )
+            );
+            
             String[] octaveOptions = {
                 "-5 Octaves", "-4 Octaves", "-3 Octaves", "-2 Octaves", "-1 Octave", 
                 "0 (Default)", "+1 Octave", "+2 Octaves", "+3 Octaves", "+4 Octaves"
@@ -171,13 +232,31 @@ import java.awt.event.MouseMotionAdapter;
             octavePanel.add(octaveCombo);
             instrumentsAndShiftPanel.add(octavePanel);
             
+            instrumentsAndShiftPanel.setBackground(steamDark);
+            
             westPanel.add(instrumentsAndShiftPanel ,BorderLayout.WEST);
             // Note names panel (7 rows)
             JPanel notesPanel = new JPanel(new GridLayout(7, 1, 5, 5));
-            notesPanel.setBorder(BorderFactory.createTitledBorder("Notes"));
+            
+            
+            notesPanel.setBorder(
+                BorderFactory.createTitledBorder(
+                    BorderFactory.createLineBorder(steamBorder),
+                    "Notes",
+                    0,
+                    0,
+                    null,
+                    creamText
+                )
+            );
+            
             notesPanel.setPreferredSize(new Dimension(67, 0));
+            
+            notesPanel.setBackground(steamDark);
+            
             for (int i = 0; i < 7; i++) {
                 JLabel noteLabel = new JLabel(soundsNames[i], SwingConstants.CENTER);
+                noteLabel.setForeground(creamText);
                 noteLabel.setFont(noteLabel.getFont().deriveFont(14f));
                 notesPanel.add(noteLabel);
             }
@@ -187,12 +266,33 @@ import java.awt.event.MouseMotionAdapter;
             
             // ===== EAST PANEL: Playback controls =====
             Box buttonBox = new Box(BoxLayout.Y_AXIS);
-            buttonBox.setBorder(BorderFactory.createTitledBorder("Playback"));
+            
+            buttonBox.setBorder(
+                BorderFactory.createTitledBorder(
+                    BorderFactory.createLineBorder(steamBorder),
+                    "Playback",
+                    0,
+                    0,
+                    null,
+                    creamText
+                )
+            );
+            
             JButton start = new JButton("Start");
             start.addActionListener(e -> startMusic());
+            
+            start.setBackground(steamLight);
+            start.setForeground(creamText);      
+            start.setFocusPainted(false);
+            
             buttonBox.add(start);
             JButton stop = new JButton("Stop");
             stop.addActionListener(e -> stopMusic());
+            
+            stop.setBackground(steamLight);
+            stop.setForeground(creamText);      
+            stop.setFocusPainted(false);
+            
             buttonBox.add(stop);
             background.add(BorderLayout.EAST, buttonBox);
             
@@ -259,12 +359,21 @@ import java.awt.event.MouseMotionAdapter;
             grid.setHgap(2);
 
             mainPanel = new JPanel(grid);
-
+            
+            mainPanel.setBackground(steamDark);
+            
             mainPanel.setBorder(
                 BorderFactory.createTitledBorder(
-                    "Beat Matrix (" + beats + " beats)"
+                    BorderFactory.createLineBorder(steamBorder),
+                    "Beat Matrix (" + beats + " beats)",
+                    0,
+                    0,
+                    null,
+                    creamText
                 )
             );
+            
+            
 
             noteGrid = new NoteCell[7][beats];
 
@@ -276,9 +385,44 @@ import java.awt.event.MouseMotionAdapter;
 
                     noteGrid[row][beat] = new NoteCell();
 
-                    JCheckBox box = new JCheckBox();
+                    JCheckBox box = new JCheckBox() {
 
+                        @Override
+                        protected void paintComponent(java.awt.Graphics g) {
+
+                            g.setColor(getBackground());
+
+                            g.fillRect(
+                                0,
+                                0,
+                                getWidth(),
+                                getHeight()
+                            );
+                        }
+                    };
+                    
                     box.setOpaque(true);
+                    
+                    
+                    box.setBorder(
+                        BorderFactory.createLineBorder(
+                            new Color(70, 90, 110)
+                        )
+                    );
+
+                    box.setBackground(
+                        //new Color(25, 35, 45)
+                            new Color(45, 65, 85)
+                        //    new Color(52, 73, 94)            
+                    );
+
+                    box.setFocusPainted(false);
+
+                    box.setContentAreaFilled(false);
+
+                    box.setPreferredSize(
+                        new Dimension(24, 24)
+                    );
 
                     final int currentRow = row;
                     final int currentBeat = beat;
@@ -399,39 +543,40 @@ import java.awt.event.MouseMotionAdapter;
 
                 box.setSelected(false);
 
-                box.setBackground(null);
+                box.setBackground(
+                    //new Color(40, 40, 40)
+                    new Color(45, 65, 85)
+                );
 
                 return;
             }
-
+            
+            
             box.setSelected(true);
 
-            // IMPORTANT
             box.setOpaque(true);
 
-            // SHORT NOTES = GREEN
-            if (duration == 1) {
+            // SMOOTH COLOR GRADIENT
 
-                box.setBackground(
-                    new Color(0, 220, 0)
-                );
-            }
+            int red;
+            int green;
 
-            // MEDIUM NOTES = ORANGE
-            else if (duration <= 3) {
+            // LIMIT MAX VISUAL LENGTH
+            int cappedDuration = Math.min(duration, 8);
 
-                box.setBackground(
-                    new Color(255, 170, 0)
-                );
-            }
+            // MORE LENGTH = MORE RED
+            red = 30 * cappedDuration;
 
-            // LONG NOTES = RED
-            else {
+            // MORE LENGTH = LESS GREEN
+            green = 255 - (25 * cappedDuration);
 
-                box.setBackground(
-                    new Color(220, 60, 60)
-                );
-            }
+            // CLAMP VALUES
+            red = Math.min(255, Math.max(0, red));
+            green = Math.min(255, Math.max(0, green));
+
+            box.setBackground(
+                new Color(red, green, 40)
+            );
         }
         
         // Regenerates the grid with new beat count from text field

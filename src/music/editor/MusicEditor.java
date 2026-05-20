@@ -10,6 +10,7 @@ package music.editor;
  */
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Label;
@@ -23,6 +24,15 @@ import javax.sound.midi.MidiEvent;
 import javax.swing.*;
 
 public class MusicEditor {
+    
+        // STEAM THEME COLORS
+    private final Color steamDark = new Color(27, 40, 56);
+
+    private final Color steamLight = new Color(45, 65, 85);
+
+    private final Color steamBorder = new Color(90, 110, 130);
+
+    private final Color creamText = new Color(245, 235, 210);
     
     // UI components for the main editor window
     JPanel mainContainer; // Holds all instrument panels in a scrollable area
@@ -49,18 +59,27 @@ public class MusicEditor {
     
     // Creates the main application window and all UI components
     public void buildGUI(){
+        
+        
         theFrame = new JFrame("Cyber BeatBox");
         theFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         BorderLayout mainLayout = new BorderLayout();
         mainContainer = new JPanel(mainLayout);
         mainContainer.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        mainContainer.setBackground(steamDark);
         
         // ===== TOP PANEL: Global controls that affect all instruments =====
         JPanel globalTopPanel = new JPanel();
-        globalTopPanel.add(new JLabel("Global Controls"));
+        JLabel globalControlsLabel = new JLabel("Global Controls");
+        globalControlsLabel.setForeground(creamText);
+        globalTopPanel.add(globalControlsLabel);
+        
+        globalTopPanel.setBackground(steamDark);
         
         // Tempo control dropdown
-        globalTopPanel.add(new JLabel("  Tempo:"));
+        JLabel tempoLabel = new JLabel("  Tempo:");
+        tempoLabel.setForeground(creamText);
+        globalTopPanel.add(tempoLabel);
         JComboBox<String> tempoCombo = new JComboBox<>(new String[]{"100 BPM", "120 BPM", "140 BPM", "Custom..."});
         tempoCombo.addActionListener(e -> {
             String selected = (String) tempoCombo.getSelectedItem();
@@ -89,13 +108,27 @@ public class MusicEditor {
         // Global play/stop buttons
         JButton playAllButton = new JButton("Play All");
         playAllButton.addActionListener(e -> playAllPartituresSequentially());
+        
+        playAllButton.setBackground(steamLight);
+        playAllButton.setForeground(creamText);      
+        playAllButton.setFocusPainted(false);
+        
         globalTopPanel.add(playAllButton);
         
         JButton stopAllButton = new JButton("Stop All");
         stopAllButton.addActionListener(e -> {for(PartiturePanel pp : partiturePanels) {pp.stopAllInstruments();}});
+        
+        stopAllButton.setBackground(steamLight);
+        stopAllButton.setForeground(creamText);      
+        stopAllButton.setFocusPainted(false);
+        
         globalTopPanel.add(stopAllButton);
         
         JButton addPartitureButton = new JButton("+ Add Partiture");
+        
+        addPartitureButton.setBackground(steamLight);
+        addPartitureButton.setForeground(creamText);      
+        addPartitureButton.setFocusPainted(false);
 
         globalTopPanel.add(addPartitureButton);
         
@@ -126,11 +159,15 @@ public class MusicEditor {
 
         PartiturePanel pp =
             new PartiturePanel(partiturePanels.size() + 1);
-
+        
+        pp.setBackground(steamDark);
+        
         partiturePanels.add(pp);
+        
+        scrollContent.setBackground(steamDark);
 
         scrollContent.add(pp);
-
+        
         scrollContent.add(Box.createVerticalStrut(15));
 
         scrollContent.revalidate();

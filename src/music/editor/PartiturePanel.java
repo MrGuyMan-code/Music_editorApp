@@ -5,6 +5,7 @@
 package music.editor;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.util.ArrayList;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -19,6 +20,12 @@ import javax.swing.JScrollPane;
 
 class PartiturePanel extends JPanel {
     
+    // STEAM THEME COLORS
+    private final Color steamDark = new Color(27, 40, 56);
+    private final Color steamLight = new Color(45, 65, 85);
+    private final Color steamBorder = new Color(90, 110, 130);
+    private final Color creamText = new Color(245, 235, 210);
+    
     private ArrayList<InstrumentPanel> instruments;
     private JPanel instrumentsContainer;
 
@@ -30,24 +37,37 @@ class PartiturePanel extends JPanel {
         instruments = new ArrayList<>();
 
         setLayout(new BorderLayout());
-
+        
         setBorder(
             BorderFactory.createTitledBorder(
-                "Partiture #" + partitureId
+                BorderFactory.createLineBorder(steamBorder),
+                "Partiture #" + partitureId,
+                0,
+                0,
+                null,
+                creamText
             )
         );
 
         instrumentsContainer = new JPanel();
         instrumentsContainer.setLayout(new BoxLayout(instrumentsContainer, BoxLayout.Y_AXIS));
 
+        instrumentsContainer.setBackground(steamDark);
+        
         JScrollPane scroll = new JScrollPane(instrumentsContainer);
-
+        
         add(scroll, BorderLayout.CENTER);
 
         JPanel bottomPanel = new JPanel();
+        
+        bottomPanel.setBackground(steamDark);
 
         JButton addInstrument =
             new JButton("+ Add Instrument");
+        
+        addInstrument.setBackground(steamLight);
+        addInstrument.setForeground(creamText);      
+        addInstrument.setFocusPainted(false);
 
         addInstrument.addActionListener(e -> {
             addNewInstrument();
