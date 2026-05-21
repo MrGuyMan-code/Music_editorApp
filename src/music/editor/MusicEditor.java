@@ -81,6 +81,9 @@ public class MusicEditor {
         tempoLabel.setForeground(creamText);
         globalTopPanel.add(tempoLabel);
         JComboBox<String> tempoCombo = new JComboBox<>(new String[]{"100 BPM", "120 BPM", "140 BPM", "Custom..."});
+        
+        tempoCombo.setUI(new SteamComboBoxUI());
+        
         tempoCombo.addActionListener(e -> {
             String selected = (String) tempoCombo.getSelectedItem();
             if (selected.equals("Custom...")) {
@@ -140,8 +143,8 @@ public class MusicEditor {
         JScrollPane scrollPane = new JScrollPane(scrollContent);
         scrollPane.getVerticalScrollBar().setUI(new SteamScrollBarUI());
         //scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.getHorizontalScrollBar().setUI(new SteamScrollBarUI());
-        //scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        //scrollPane.getHorizontalScrollBar().setUI(new SteamScrollBarUI());
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         
         scrollPane.setBorder(null);
 

@@ -262,6 +262,8 @@ import java.awt.event.MouseMotionAdapter;
            );
 
            instrumentCombo = new JComboBox<>(instrumentNames);
+           
+           instrumentCombo.setUI(new SteamComboBoxUI());
 
            instrumentCombo.addActionListener(e -> {
 
@@ -307,6 +309,8 @@ import java.awt.event.MouseMotionAdapter;
 
            octaveCombo =
                new JComboBox<>(octaveOptions);
+           
+           octaveCombo.setUI(new SteamComboBoxUI());
 
            octaveCombo.setSelectedIndex(5);
 
@@ -400,6 +404,9 @@ import java.awt.event.MouseMotionAdapter;
                    creamText
                )
            );
+           
+           // SAME SIZE
+            Dimension buttonSize = new Dimension(67, 25);
 
            JButton start = new JButton("Start");
 
@@ -410,6 +417,10 @@ import java.awt.event.MouseMotionAdapter;
            start.setForeground(creamText);
 
            start.setFocusPainted(false);
+           
+           
+           start.setPreferredSize(buttonSize);
+           start.setMaximumSize(buttonSize);
 
            buttonBox.add(start);
 
@@ -422,6 +433,9 @@ import java.awt.event.MouseMotionAdapter;
            stop.setForeground(creamText);
 
            stop.setFocusPainted(false);
+           
+           stop.setPreferredSize(buttonSize);
+           stop.setMaximumSize(buttonSize);
 
            buttonBox.add(stop);
 

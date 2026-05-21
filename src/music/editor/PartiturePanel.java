@@ -54,9 +54,11 @@ class PartiturePanel extends JPanel {
 
         instrumentsContainer.setBackground(steamDark);
         
-        JScrollPane scroll = new JScrollPane(instrumentsContainer);
+       // JScrollPane scroll = new JScrollPane(instrumentsContainer);
         
-        add(scroll, BorderLayout.CENTER);
+        add(instrumentsContainer, BorderLayout.CENTER);
+        
+        //add(scroll, BorderLayout.CENTER);
 
         JPanel bottomPanel = new JPanel();
         
