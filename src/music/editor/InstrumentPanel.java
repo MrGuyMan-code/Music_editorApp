@@ -6,18 +6,12 @@ package music.editor;
 
 import music.editor.theme.SteamComboBoxUI;
 import music.editor.theme.SteamColors;
-import music.editor.grid.NoteCell;
 import music.editor.grid.NoteGrid;
+import music.editor.grid.NoteInfo;
+import music.editor.midi.MidiPatternPlayer;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridLayout;
-import java.util.ArrayList;
-import javax.sound.midi.MidiEvent;
-import javax.sound.midi.MidiSystem;
-import javax.sound.midi.Sequence;
-import javax.sound.midi.Sequencer;
-import javax.sound.midi.ShortMessage;
-import javax.sound.midi.Track;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -27,13 +21,11 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import java.awt.Color;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
 
 /**
  *
@@ -46,15 +38,11 @@ import java.awt.event.MouseMotionAdapter;
         private int instrumentId;
         private JPanel background;
         private JPanel mainPanel;
-        private ArrayList<JCheckBox> checkboxList; // Grid of checkboxes (rows x beats)
         
         private NoteGrid noteGrid;
-        private JCheckBox[][] checkBoxGrid;
+        private JCheckBox[][] checkBoxGrid;     // Grid of checkboxes (rows x beats)
         
-        // MIDI components for playback
-        private Sequencer sequencer;
-        private Sequence sequence;
-        private Track track;
+        private MidiPatternPlayer player;
         
         // Musical parameters
         private int currentInstrument = 38; // Default instrument (Acoustic Snare)
@@ -134,9 +122,7 @@ import java.awt.event.MouseMotionAdapter;
 
            background.setBackground(steamDark);
 
-           background.setBorder(
-               BorderFactory.createEmptyBorder(5, 5, 5, 5)
-           );
+           background.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
            // ===== TOP PANEL =====
 
@@ -158,16 +144,13 @@ import java.awt.event.MouseMotionAdapter;
 
            beatsTextField.setCaretColor(creamText);
 
-           beatsTextField.setBorder(
-               BorderFactory.createLineBorder(steamBorder)
-           );
+           beatsTextField.setBorder(BorderFactory.createLineBorder(steamBorder));
 
            topPanel.add(beatsTextField);
 
            // GENERATE BUTTON
 
-           JButton generateButton =
-               new JButton("Generate Grid");
+           JButton generateButton = new JButton("Generate Grid");
 
            generateButton.addActionListener(e -> generateNewGrid());
 
@@ -181,12 +164,9 @@ import java.awt.event.MouseMotionAdapter;
 
            // CLEAR BUTTON
 
-           JButton clearAllButton =
-               new JButton("Clear All");
+           JButton clearAllButton = new JButton("Clear All");
 
-           clearAllButton.addActionListener(
-               e -> clearAllCheckboxes()
-           );
+           clearAllButton.addActionListener(e -> clearAllCheckboxes());
 
            clearAllButton.setBackground(steamLight);
 
@@ -198,12 +178,9 @@ import java.awt.event.MouseMotionAdapter;
 
            // REMOVE BUTTON
 
-           JButton removeButton =
-               new JButton("Remove Instrument");
+           JButton removeButton = new JButton("Remove Instrument");
 
-           removeButton.addActionListener(
-               e -> removeThisInstrument()
-           );
+           removeButton.addActionListener(e -> removeThisInstrument());
 
            removeButton.setBackground(steamLight);
 
@@ -217,22 +194,17 @@ import java.awt.event.MouseMotionAdapter;
 
            // ===== WEST PANEL =====
 
-           JPanel westPanel =
-               new JPanel(new BorderLayout());
+           JPanel westPanel = new JPanel(new BorderLayout());
 
            westPanel.setBackground(steamDark);
 
-           JPanel instrumentsAndShiftPanel =
-               new JPanel(new GridLayout(2, 1, 0, 10));
+           JPanel instrumentsAndShiftPanel = new JPanel(new GridLayout(2, 1, 0, 10));
 
-           instrumentsAndShiftPanel.setBackground(
-               steamDark
-           );
+           instrumentsAndShiftPanel.setBackground(steamDark);
 
            // INSTRUMENT PANEL
 
-           JPanel instrumentPanel =
-               new JPanel(new BorderLayout());
+           JPanel instrumentPanel = new JPanel(new BorderLayout());
 
            instrumentPanel.setBackground(steamDark);
 
@@ -295,8 +267,7 @@ import java.awt.event.MouseMotionAdapter;
                "-5 Octaves", "-4 Octaves", "-3 Octaves", "-2 Octaves", "-1 Octave",
                "0 (Default)", "+1 Octave", "+2 Octaves", "+3 Octaves","+4 Octaves"};
 
-           octaveCombo =
-               new JComboBox<>(octaveOptions);
+           octaveCombo = new JComboBox<>(octaveOptions);
            
            octaveCombo.setUI(new SteamComboBoxUI());
 
@@ -304,11 +275,9 @@ import java.awt.event.MouseMotionAdapter;
 
            octaveCombo.addActionListener(e -> {
 
-               int selectedIndex =
-                   octaveCombo.getSelectedIndex();
+               int selectedIndex = octaveCombo.getSelectedIndex();
 
-               currentOctaveShift =
-                   selectedIndex - 5;
+               currentOctaveShift = selectedIndex - 5;
 
                updateOctave();
            });
@@ -324,8 +293,7 @@ import java.awt.event.MouseMotionAdapter;
 
            // NOTES PANEL
 
-           JPanel notesPanel =
-               new JPanel(new GridLayout(7, 1, 5, 5));
+           JPanel notesPanel = new JPanel(new GridLayout(7, 1, 5, 5));
 
            notesPanel.setBackground(steamDark);
 
@@ -363,20 +331,13 @@ import java.awt.event.MouseMotionAdapter;
                notesPanel.add(noteLabel);
            }
 
-           westPanel.add(
-               notesPanel,
-               BorderLayout.EAST
-           );
+           westPanel.add(notesPanel, BorderLayout.EAST);
 
-           background.add(
-               BorderLayout.WEST,
-               westPanel
-           );
+           background.add(BorderLayout.WEST, westPanel);
 
            // ===== PLAYBACK =====
 
-           Box buttonBox =
-               new Box(BoxLayout.Y_AXIS);
+           Box buttonBox = new Box(BoxLayout.Y_AXIS);
 
            buttonBox.setBackground(steamDark);
 
@@ -434,14 +395,12 @@ import java.awt.event.MouseMotionAdapter;
 
            // ===== GRID =====
 
-           checkboxList =
-               new ArrayList<JCheckBox>();
-
            createGrid(16);
-
+           
+           player = new MidiPatternPlayer();
+           
            add(background, BorderLayout.CENTER);
 
-           setUpMidi();
        }
         
         // Removes this instrument from the editor
@@ -472,16 +431,16 @@ import java.awt.event.MouseMotionAdapter;
         // Unchecks all checkboxes in the beat matrix
         private void clearAllCheckboxes() {
 
+            noteGrid.clear();
+
+            refreshGrid();
+        }
+        
+        private void refreshGrid() {
+
             for (int row = 0; row < 7; row++) {
 
-                for (int beat = 0; beat < currentBeats; beat++) {
-                    
-                    noteGrid.setActive(row, beat, false);
-                    
-                    noteGrid.setContinuation(row, beat, false);
-
-                    updateCellVisual(row, beat, 1);
-                }
+                refreshRowVisuals(row);
             }
         }
         
@@ -554,16 +513,18 @@ import java.awt.event.MouseMotionAdapter;
                             if (noteGrid.isActive(currentRow, currentBeat)) {
 
                                 noteGrid.clearNote(currentRow, currentBeat);
-                                refreshRowColors(currentRow);
+                                refreshRowVisuals(currentRow);
 
                                 dragging = false;
                                 return;
                             }
 
-                            noteGrid.setActive(currentRow, currentBeat, true);
-                            noteGrid.setContinuation(currentRow, currentBeat, false);
+                            //noteGrid.setActive(currentRow, currentBeat, true);
+                            //noteGrid.setContinuation(currentRow, currentBeat, false);
+                            
+                            noteGrid.extendNote(currentRow,currentBeat,currentBeat);
 
-                            refreshRowColors(currentRow);
+                            refreshRowVisuals(currentRow);
                         }
 
                         @Override
@@ -573,13 +534,9 @@ import java.awt.event.MouseMotionAdapter;
                             if (currentRow != dragStartRow) return;
                             if (currentBeat < dragStartBeat) return;
 
-                            for (int b = dragStartBeat; b <= currentBeat; b++) {
+                            noteGrid.extendNote(currentRow,dragStartBeat,currentBeat);
 
-                                noteGrid.setActive(currentRow, b, true);
-                                noteGrid.setContinuation(currentRow, b, (b != dragStartBeat));
-                            }
-
-                            refreshRowColors(currentRow);
+                            refreshRowVisuals(currentRow);
                         }
 
                         @Override
@@ -659,160 +616,28 @@ import java.awt.event.MouseMotionAdapter;
             }
         }
         
-        private void refreshRowColors(int row) {
-            int beat = 0;
+        private void refreshRowVisuals(int row) {
 
-            while (beat < currentBeats) {
+            // RESET ROW VISUALS
+            for (int beat = 0; beat < currentBeats; beat++) {
 
+                updateCellVisual(row, beat, 1);
+            }
 
-                if (noteGrid.isActive(row, beat) && !noteGrid.isContinuation(row, beat)) {
+            // DRAW NOTES
+            for (NoteInfo info : noteGrid.getNotesInRow(row)) {
 
-                    int duration = 1;
+                int start = info.getStartBeat();
 
-                    int next = beat + 1;
+                int duration = info.getDuration();
 
-                    while (next < currentBeats && noteGrid.isActive(row, next) && noteGrid.isContinuation(row, next)) {
+                for (int b = start; b < start + duration; b++) {
 
-                        duration++;
-                        next++;
-                    }
-
-                    for (int b = beat; b < beat + duration; b++) {
-                        updateCellVisual(row,b,duration);
-                    }
-
-                    beat += duration;
-                }
-
-                else {
-
-                    updateCellVisual(row,beat,1);
-
-                    beat++;
+                    updateCellVisual(row, b, duration);
                 }
             }
         }
-        
-        // Initializes the MIDI sequencer for playback
-        private void setUpMidi() {
-            try {
-                sequencer = MidiSystem.getSequencer();
-                sequencer.open();
-                sequencer.setTempoInBPM(120);
-            } catch(Exception e) {e.printStackTrace();}
-        }
-        
-        // Builds the MIDI track from checkbox selections and starts playback
-        private void buildTrackAndStart() {
-
-            try {
-
-                if (sequencer.isRunning()) {
-                    sequencer.stop();
-                }
-
-                sequence = new Sequence(Sequence.PPQ, 4);
-
-                track = sequence.createTrack();
-
-                ShortMessage instrumentMsg =
-                    new ShortMessage();
-
-                instrumentMsg.setMessage(
-                    ShortMessage.PROGRAM_CHANGE,
-                    0,
-                    currentInstrument,
-                    0
-                );
-
-                track.add(new MidiEvent(instrumentMsg, 0));
-
-                for (int row = 0; row < 7; row++) {
-
-                    int beat = 0;
-
-                    while (beat < currentBeats) {
-
-                        //NoteCell cell = noteGrid[row][beat];
-
-                        // START NOTE ONLY
-                        if (noteGrid.isActive(row, beat) && !noteGrid.isContinuation(row, beat)) {
-
-                            int duration = 1;
-
-                            int nextBeat = beat + 1;
-
-                            // COUNT CONTINUATIONS
-                            while (
-                                nextBeat < currentBeats &&
-                                noteGrid.isActive(row, nextBeat) &&
-                                noteGrid.isContinuation(row, nextBeat)
-                            ) {
-
-                                duration++;
-                                nextBeat++;
-                            }
-
-                            // NOTE ON
-                            ShortMessage noteOn =
-                                new ShortMessage();
-
-                            noteOn.setMessage(
-                                ShortMessage.NOTE_ON,
-                                0,
-                                notes[row],
-                                100
-                            );
-
-                            track.add(
-                                new MidiEvent(noteOn, beat)
-                            );
-
-                            // NOTE OFF
-                            ShortMessage noteOff =
-                                new ShortMessage();
-
-                            noteOff.setMessage(
-                                ShortMessage.NOTE_OFF,
-                                0,
-                                notes[row],
-                                100
-                            );
-
-                            track.add(
-                                new MidiEvent(
-                                    noteOff,
-                                    beat + duration
-                                )
-                            );
-
-                            beat += duration;
-                        }
-
-                        else {
-
-                            beat++;
-                        }
-                    }
-                }
-
-                sequencer.setSequence(sequence);
-
-                sequencer.start();
-
-            }
-
-            catch (Exception e) {
-
-                e.printStackTrace();
-
-                JOptionPane.showMessageDialog(
-                    this,
-                    "Error playing music: " + e.getMessage()
-                );
-            }
-        }
-        
+   
         public int getCurrentInstrument() {
             return currentInstrument;
         }
@@ -830,8 +655,7 @@ import java.awt.event.MouseMotionAdapter;
 
                 for (int beat = 0; beat < currentBeats; beat++) {
 
-                    data[row][beat] =
-                        noteGrid.isActive(row, beat);
+                    data[row][beat] = noteGrid.isActive(row, beat);
                 }
             }
 
@@ -840,15 +664,11 @@ import java.awt.event.MouseMotionAdapter;
 
         public boolean[][] getContinuationData() {
 
-            boolean[][] data =
-                new boolean[7][currentBeats];
+            boolean[][] data = new boolean[7][currentBeats];
 
             for (int row = 0; row < 7; row++) {
-
                 for (int beat = 0; beat < currentBeats; beat++) {
-
-                    data[row][beat] =
-                        noteGrid.isContinuation(row, beat);
+                    data[row][beat] = noteGrid.isContinuation(row, beat);
                 }
             }
 
@@ -858,14 +678,11 @@ import java.awt.event.MouseMotionAdapter;
         public void setCurrentInstrument(int instrument) {
 
             currentInstrument = instrument;
-
             // UPDATE COMBOBOX VISUALLY
             for (int i = 0; i < instruments.length; i++) {
 
                 if (instruments[i] == instrument) {
-
                     instrumentCombo.setSelectedIndex(i);
-
                     break;
                 }
             }
@@ -883,35 +700,24 @@ import java.awt.event.MouseMotionAdapter;
             createGrid(beats);
         }
 
-        public void loadNoteData(boolean[][] active,boolean[][] continuation) {
+        public void loadNoteData(boolean[][] active, boolean[][] continuation) {
             noteGrid.load(active, continuation);
-
-            for (int row = 0; row < 7; row++) {
-                refreshRowColors(row);
-            }
+            refreshGrid();
         }
-        
-        private void clearRow(int row) {
-            noteGrid.clearRow(row);
-        }
-        
+                
         // Public method to start music playback
         public void startMusic() {
-            buildTrackAndStart();
+            player.play(noteGrid, notes, currentInstrument, currentBeats);
         }
         
         // Public method to stop music playback
         public void stopMusic() {
-            if (sequencer != null && sequencer.isRunning()) {
-                sequencer.stop();
-            }
+            player.stop();
         }
         
         // Public method to change tempo
         public void setTempo(int bpm) {
-            if (sequencer != null && sequencer.isOpen()) {
-                sequencer.setTempoInBPM(bpm);
-            }
+            player.setTempo(bpm);
         }
         
         public int getCurrentBeats() {
@@ -919,7 +725,6 @@ import java.awt.event.MouseMotionAdapter;
         }
 
         public float getTempo() {
-            return sequencer.getTempoInBPM();
-        }
-        
+            return player.getTempo();
+        }      
     }

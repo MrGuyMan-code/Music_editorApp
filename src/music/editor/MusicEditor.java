@@ -14,43 +14,20 @@ import music.editor.theme.SteamScrollBarUI;
 import music.editor.theme.SteamColors;
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.GridLayout;
-import java.awt.Label;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
-import javax.sound.midi.MidiSystem;
-import javax.sound.midi.Sequence;
-import javax.sound.midi.Sequencer;
-import javax.sound.midi.Track;
-import javax.sound.midi.ShortMessage;
-import javax.sound.midi.MidiEvent;
 import javax.swing.*;
 
 public class MusicEditor implements SteamColors{
     
     
     // UI components for the main editor window
-    JPanel mainContainer; // Holds all instrument panels in a scrollable area
-    ArrayList<PartiturePanel> partiturePanels; // Collection of all musical instrument panels
-    JFrame theFrame;
-    
-    // Note names for the 7 rows (descending pitch order)
-    String[] soundsNames = {"SI", "LA", "SOL", "FA", "MI", "RE", "DO"};
-    
-    // MIDI instrument numbers (mostly percussion sounds)
-    int[] instruments = {35, 42, 46, 38, 49, 39, 50, 60, 70, 72, 64, 56, 58, 47, 67, 63};
-    
-    // Display names for the instrument selector dropdown
-    String[] instrumentNames = {
-        "Bass Drum (35)", "Closed Hi-Hat (42)", "Open Hi-Hat (46)", "Acoustic Snare (38)",
-        "Crash Cymbal (49)", "Hand Clap (39)", "Hi Tom (50)", "Low Bongo (60)",
-        "Mute Cuica (70)", "Open Cuica (72)", "Low Timbal (64)", "High Agogo (56)",
-        "Cabasa (58)", "Maracas (47)", "High Wood Block (67)", "Low Wood Block (63)"
-    };
+    private JPanel mainContainer; // Holds all instrument panels in a scrollable area
+    private ArrayList<PartiturePanel> partiturePanels; // Collection of all musical instrument panels
+    private JFrame theFrame;
 
     public static void main(String[] args) {
         new MusicEditor().buildGUI();
@@ -116,24 +93,58 @@ public class MusicEditor implements SteamColors{
         tempoCombo.setUI(new SteamComboBoxUI());
         
         tempoCombo.addActionListener(e -> {
-            String selected = (String) tempoCombo.getSelectedItem();
+
+            String selected =
+                (String) tempoCombo.getSelectedItem();
+
             if (selected.equals("Custom...")) {
-                String input = JOptionPane.showInputDialog(theFrame, "Enter tempo (BPM):", "120");
+
+                String input =
+                    JOptionPane.showInputDialog(
+                        theFrame,
+                        "Enter tempo (BPM):",
+                        "120"
+                    );
+
                 if (input != null) {
+
                     try {
-                        int tempo = Integer.parseInt(input);
+
+                        int tempo =
+                            Integer.parseInt(input);
+
                         if (tempo >= 40 && tempo <= 240) {
+
                             setTempoForAll(tempo);
+
+                            System.out.println(
+                                "Noul tempo este: " + tempo
+                            );
+
                         } else {
-                            JOptionPane.showMessageDialog(theFrame, "Tempo must be between 40 and 240 BPM");
+
+                            JOptionPane.showMessageDialog(
+                                theFrame,
+                                "Tempo must be between 40 and 240 BPM"
+                            );
                         }
+
                     } catch (NumberFormatException ex) {
-                        JOptionPane.showMessageDialog(theFrame, "Please enter a valid number");
+
+                        JOptionPane.showMessageDialog(
+                            theFrame,
+                            "Please enter a valid number"
+                        );
                     }
                 }
-                tempoCombo.setSelectedItem("120 BPM");
+
             } else {
-                int tempo = Integer.parseInt(selected.split(" ")[0]);
+
+                int tempo =
+                    Integer.parseInt(
+                        selected.split(" ")[0]
+                    );
+
                 setTempoForAll(tempo);
             }
         });
@@ -143,26 +154,20 @@ public class MusicEditor implements SteamColors{
         JButton playAllButton = new JButton("Play All");
         playAllButton.addActionListener(e -> playAllPartituresSequentially());
         
-        playAllButton.setBackground(steamLight);
-        playAllButton.setForeground(creamText);      
-        playAllButton.setFocusPainted(false);
+        styleButton(playAllButton);
         
         globalTopPanel.add(playAllButton);
         
         JButton stopAllButton = new JButton("Stop All");
         stopAllButton.addActionListener(e -> {for(PartiturePanel pp : partiturePanels) {pp.stopAllInstruments();}});
         
-        stopAllButton.setBackground(steamLight);
-        stopAllButton.setForeground(creamText);      
-        stopAllButton.setFocusPainted(false);
+        styleButton(stopAllButton);
         
         globalTopPanel.add(stopAllButton);
         
         JButton addPartitureButton = new JButton("+ Add Partiture");
         
-        addPartitureButton.setBackground(steamLight);
-        addPartitureButton.setForeground(creamText);      
-        addPartitureButton.setFocusPainted(false);
+        styleButton(addPartitureButton);
 
         globalTopPanel.add(addPartitureButton);
         
@@ -264,44 +269,28 @@ public class MusicEditor implements SteamColors{
 
                     pp.clearInstruments();
 
-                    int instrumentCount =
-                        in.readInt();
+                    int instrumentCount = in.readInt();
 
-                    for (
-                        int i = 0;
-                        i < instrumentCount;
-                        i++
-                    ) {
+                    for (int i = 0; i < instrumentCount; i++) {
 
-                        int instrument =
-                            in.readInt();
+                        int instrument = in.readInt();
 
-                        int beats =
-                            in.readInt();
+                        int beats = in.readInt();
 
-                        int octaveShift =
-                            in.readInt();
+                        int octaveShift = in.readInt();
 
-                        boolean[][] active =
-                            new boolean[7][beats];
+                        boolean[][] active = new boolean[7][beats];
 
-                        boolean[][] continuation =
-                            new boolean[7][beats];
+                        boolean[][] continuation = new boolean[7][beats];
 
                         // READ GRID DATA
                         for (int row = 0; row < 7; row++) {
 
-                            for (
-                                int beat = 0;
-                                beat < beats;
-                                beat++
-                            ) {
+                            for (int beat = 0;beat < beats; beat++) {
 
-                                active[row][beat] =
-                                    in.readBoolean();
+                                active[row][beat] = in.readBoolean();
 
-                                continuation[row][beat] =
-                                    in.readBoolean();
+                                continuation[row][beat] = in.readBoolean();
                             }
                         }
 
@@ -353,11 +342,9 @@ public class MusicEditor implements SteamColors{
 
         try {
 
-            JFileChooser chooser =
-                new JFileChooser();
+            JFileChooser chooser = new JFileChooser();
 
-            int result =
-                chooser.showSaveDialog(theFrame);
+            int result = chooser.showSaveDialog(theFrame);
 
             if (result != JFileChooser.APPROVE_OPTION) {
                 return;
@@ -390,23 +377,15 @@ public class MusicEditor implements SteamColors{
 
                 for (InstrumentPanel ip : pp.getInstruments()) {
 
-                    out.writeInt(
-                        ip.getCurrentInstrument()
-                    );
+                    out.writeInt(ip.getCurrentInstrument());
 
-                    out.writeInt(
-                        ip.getCurrentBeats()
-                    );
+                    out.writeInt(ip.getCurrentBeats());
 
-                    out.writeInt(
-                        ip.getCurrentOctaveShift()
-                    );
+                    out.writeInt(ip.getCurrentOctaveShift());
 
-                    boolean[][] active =
-                        ip.getActiveData();
+                    boolean[][] active = ip.getActiveData();
 
-                    boolean[][] continuation =
-                        ip.getContinuationData();
+                    boolean[][] continuation = ip.getContinuationData();
 
                     for (int row = 0; row < 7; row++) {
 
@@ -475,6 +454,13 @@ public class MusicEditor implements SteamColors{
 
             pp.setTempoForAllInstruments(bpm);
         }
+    }
+    
+    private void styleButton(JButton button) {
+
+        button.setBackground(steamLight);
+        button.setForeground(creamText);
+        button.setFocusPainted(false);
     }
 
 }

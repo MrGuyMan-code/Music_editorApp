@@ -4,6 +4,8 @@
  */
 package music.editor.grid;
 
+import java.util.ArrayList;
+
 /**
  *
  * @author desktop
@@ -85,23 +87,36 @@ public class NoteGrid {
     
     public void resize(int newBeats) {
 
-        this.beats = newBeats;
+        int oldBeats = beats;
 
-        NoteCell[][] newGrid = new NoteCell[rows][newBeats];
+        NoteCell[][] oldGrid = grid;
+
+        NoteCell[][] newGrid =
+            new NoteCell[rows][newBeats];
 
         for (int r = 0; r < rows; r++) {
+
             for (int b = 0; b < newBeats; b++) {
 
-                // keep old data if exists
-                if (grid != null && b < this.beats && r < rows) {
-                    newGrid[r][b] = grid[r][b];
-                } else {
-                    newGrid[r][b] = new NoteCell();
+                // COPY OLD CELL IF IT EXISTS
+                if (b < oldBeats) {
+
+                    newGrid[r][b] =
+                        oldGrid[r][b];
+                }
+
+                // OTHERWISE CREATE NEW CELL
+                else {
+
+                    newGrid[r][b] =
+                        new NoteCell();
                 }
             }
         }
 
         grid = newGrid;
+
+        beats = newBeats;
     }
     
     public void load(boolean[][] active, boolean[][] continuation) {
@@ -124,6 +139,88 @@ public class NoteGrid {
         for (int b = 0; b < beats; b++) {
             grid[row][b].setActive(false);
             grid[row][b].setContinuation(false);
+        }
+    }
+    
+    public NoteInfo getNoteInfo(int row, int beat) {
+
+        // NOT AN ACTIVE NOTE
+        if (!isActive(row, beat)) {
+            return null;
+        }
+
+        // FIND START
+        int start = beat;
+
+        while (
+            start > 0 &&
+            isContinuation(row, start)
+        ) {
+            start--;
+        }
+
+        // FIND DURATION
+        int duration = 1;
+
+        int next = start + 1;
+
+        while (
+            next < beats &&
+            isActive(row, next) &&
+            isContinuation(row, next)
+        ) {
+
+            duration++;
+            next++;
+        }
+
+        return new NoteInfo(start, duration);
+    }
+    
+    public void extendNote(int row, int startBeat, int endBeat) {
+
+        for (int b = startBeat; b <= endBeat; b++) {
+
+            grid[row][b].setActive(true);
+
+            grid[row][b].setContinuation(
+                b != startBeat
+            );
+        }
+    }
+    
+    public boolean isNoteStart(int row, int beat) {
+        return isActive(row, beat)
+            && !isContinuation(row, beat);
+    }
+    
+    public ArrayList<NoteInfo> getNotesInRow(int row) {
+        ArrayList<NoteInfo> notes = new ArrayList<>();
+
+        for (int beat = 0; beat < beats; beat++) {
+
+            // SKIP EMPTY
+            if (!isActive(row, beat)) {
+                continue;
+            }
+
+            // SKIP CONTINUATIONS
+            if (isContinuation(row, beat)) {
+                continue;
+            }
+
+            NoteInfo info = getNoteInfo(row, beat);
+
+            notes.add(info);
+        }
+
+        return notes;
+    }
+    
+    public void clear() {
+        for (int row = 0; row < rows; row++) {
+
+            clearRow(row);
         }
     }
 }
