@@ -17,14 +17,8 @@ import javax.swing.JComponent;
 import javax.swing.JScrollBar;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 
-public class SteamScrollBarUI extends BasicScrollBarUI {
+public class SteamScrollBarUI extends BasicScrollBarUI implements SteamColors {
 
-    // STEAM COLORS
-    private final Color steamDark = new Color(27, 40, 56);
-
-    private final Color steamLight = new Color(45, 65, 85);
-
-    private final Color steamBorder = new Color(90, 110, 130);
 
     @Override
     protected void configureScrollBarColors() {

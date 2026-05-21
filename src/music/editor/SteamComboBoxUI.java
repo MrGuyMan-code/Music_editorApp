@@ -24,16 +24,8 @@ import javax.swing.ListCellRenderer;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicComboPopup;
 
-public class SteamComboBoxUI extends BasicComboBoxUI {
+public class SteamComboBoxUI extends BasicComboBoxUI implements SteamColors{
 
-    // STEAM COLORS
-    private final Color steamDark = new Color(27, 40, 56);
-
-    private final Color steamLight = new Color(45, 65, 85);
-
-    private final Color steamBorder = new Color(90, 110, 130);
-
-    private final Color creamText = new Color(245, 235, 210);
 
     @Override
     protected JButton createArrowButton() {

@@ -7,6 +7,7 @@ package music.editor;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.util.ArrayList;
+import javax.sound.midi.Sequence;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -18,13 +19,8 @@ import javax.swing.JScrollPane;
  * @author desktop
  */
 
-class PartiturePanel extends JPanel {
+class PartiturePanel extends JPanel implements SteamColors{
     
-    // STEAM THEME COLORS
-    private final Color steamDark = new Color(27, 40, 56);
-    private final Color steamLight = new Color(45, 65, 85);
-    private final Color steamBorder = new Color(90, 110, 130);
-    private final Color creamText = new Color(245, 235, 210);
     
     private ArrayList<InstrumentPanel> instruments;
     private JPanel instrumentsContainer;
@@ -121,7 +117,7 @@ class PartiturePanel extends JPanel {
         float bpm = instruments.get(0).getTempo();
 
         long millis =
-            (long)((60000.0 / bpm) * maxBeats);
+            (long)((60000.0 / bpm) * (maxBeats / 4.0));
 
         return millis;
     }
@@ -137,6 +133,55 @@ class PartiturePanel extends JPanel {
         instruments.remove(ip);
 
         instrumentsContainer.remove(ip);
+
+        instrumentsContainer.revalidate();
+
+        instrumentsContainer.repaint();
+    }
+    
+    public ArrayList<InstrumentPanel> getInstruments() {
+        return instruments;
+    }
+
+    public int getInstrumentCount() {
+        return instruments.size();
+    }
+
+    public void addLoadedInstrument(
+        int instrument,
+        int beats,
+        int octaveShift,
+        boolean[][] active,
+        boolean[][] continuation
+    ) {
+
+        InstrumentPanel ip =
+            new InstrumentPanel(
+                instruments.size() + 1,
+                this
+            );
+
+        ip.setCurrentInstrument(instrument);
+
+        ip.setCurrentOctaveShift(octaveShift);
+
+        ip.setCurrentBeats(beats);
+
+        ip.loadNoteData(active, continuation);
+
+        instruments.add(ip);
+
+        instrumentsContainer.add(ip);
+
+        instrumentsContainer.revalidate();
+
+        instrumentsContainer.repaint();
+    }
+
+    void clearInstruments() {
+        instruments.clear();
+
+        instrumentsContainer.removeAll();
 
         instrumentsContainer.revalidate();
 

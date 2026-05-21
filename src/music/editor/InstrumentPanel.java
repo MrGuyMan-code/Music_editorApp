@@ -36,16 +36,7 @@ import java.awt.event.MouseMotionAdapter;
  * @author desktop
  */
     // Inner class representing a single instrument panel (one instrument's pattern)
-    class InstrumentPanel extends JPanel {
-        
-        // STEAM THEME COLORS
-        private final Color steamDark = new Color(27, 40, 56);
-
-        private final Color steamLight = new Color(45, 65, 85);
-
-        private final Color steamBorder = new Color(90, 110, 130);
-
-        private final Color creamText = new Color(245, 235, 210);
+    class InstrumentPanel extends JPanel implements SteamColors{
         
         // Instrument identification and UI components
         private int instrumentId;
@@ -914,6 +905,102 @@ import java.awt.event.MouseMotionAdapter;
                     this,
                     "Error playing music: " + e.getMessage()
                 );
+            }
+        }
+        
+        public int getCurrentInstrument() {
+            return currentInstrument;
+        }
+
+        public int getCurrentOctaveShift() {
+            return currentOctaveShift;
+        }
+
+        public boolean[][] getActiveData() {
+
+            boolean[][] data =
+                new boolean[7][currentBeats];
+
+            for (int row = 0; row < 7; row++) {
+
+                for (int beat = 0; beat < currentBeats; beat++) {
+
+                    data[row][beat] =
+                        noteGrid[row][beat].active;
+                }
+            }
+
+            return data;
+        }
+
+        public boolean[][] getContinuationData() {
+
+            boolean[][] data =
+                new boolean[7][currentBeats];
+
+            for (int row = 0; row < 7; row++) {
+
+                for (int beat = 0; beat < currentBeats; beat++) {
+
+                    data[row][beat] =
+                        noteGrid[row][beat].continuation;
+                }
+            }
+
+            return data;
+        }
+
+        public void setCurrentInstrument(int instrument) {
+
+            currentInstrument = instrument;
+
+            // UPDATE COMBOBOX VISUALLY
+            for (int i = 0; i < instruments.length; i++) {
+
+                if (instruments[i] == instrument) {
+
+                    instrumentCombo.setSelectedIndex(i);
+
+                    break;
+                }
+            }
+        }
+
+        public void setCurrentOctaveShift(int shift) {
+
+            currentOctaveShift = shift;
+
+            octaveCombo.setSelectedIndex(shift + 5);
+
+            updateOctave();
+        }
+
+        public void setCurrentBeats(int beats) {
+
+            currentBeats = beats;
+
+            beatsTextField.setText("" + beats);
+
+            createGrid(beats);
+        }
+
+        public void loadNoteData(
+            boolean[][] active,
+            boolean[][] continuation
+        ) {
+
+            for (int row = 0; row < 7; row++) {
+
+                for (int beat = 0; beat < currentBeats; beat++) {
+
+                    noteGrid[row][beat].active =
+                        active[row][beat];
+
+                    noteGrid[row][beat].continuation =
+                        continuation[row][beat];
+                }
+
+                refreshRowColors(row);
             }
         }
         
