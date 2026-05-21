@@ -9,6 +9,9 @@ package music.editor;
  * @author desktop
  */
 
+import music.editor.theme.SteamComboBoxUI;
+import music.editor.theme.SteamScrollBarUI;
+import music.editor.theme.SteamColors;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;

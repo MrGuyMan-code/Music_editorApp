@@ -4,6 +4,7 @@
  */
 package music.editor;
 
+import music.editor.theme.SteamColors;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.util.ArrayList;

@@ -2,12 +2,13 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package music.editor;
+package music.editor.theme;
 
 /**
  *
  * @author desktop
  */
+import music.editor.theme.SteamColors;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;

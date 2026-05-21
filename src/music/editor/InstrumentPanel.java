@@ -4,6 +4,9 @@
  */
 package music.editor;
 
+import music.editor.theme.SteamComboBoxUI;
+import music.editor.theme.SteamColors;
+import music.editor.grid.NoteCell;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridLayout;
@@ -96,13 +99,6 @@ import java.awt.event.MouseMotionAdapter;
             "High Wood Block (67)",
             "Low Wood Block (63)"
         };
-        
-        
-        private class NoteCell {
-
-            boolean active = false;
-            boolean continuation = false;
-        }
         
         public InstrumentPanel(int id, PartiturePanel parent) {
 
@@ -479,9 +475,9 @@ import java.awt.event.MouseMotionAdapter;
 
                 for (int beat = 0; beat < currentBeats; beat++) {
 
-                    noteGrid[row][beat].active = false;
+                    noteGrid[row][beat].setActive(false);
 
-                    noteGrid[row][beat].continuation = false;
+                    noteGrid[row][beat].setContinuation(false);
 
                     updateCellVisual(row, beat, 1);
                 }
@@ -584,7 +580,7 @@ import java.awt.event.MouseMotionAdapter;
                     dragStartBeat = currentBeat;
 
                     // CLICKED EXISTING NOTE -> REMOVE WHOLE NOTE
-                    if (noteGrid[currentRow][currentBeat].active) {
+                    if (noteGrid[currentRow][currentBeat].isActive()) {
 
                         int start = currentBeat;
                         int end = currentBeat;
@@ -592,7 +588,7 @@ import java.awt.event.MouseMotionAdapter;
                         // FIND START
                         while (
                             start > 0 &&
-                            noteGrid[currentRow][start].continuation
+                            noteGrid[currentRow][start].isContinuation()
                         ) {
                             start--;
                         }
@@ -600,8 +596,8 @@ import java.awt.event.MouseMotionAdapter;
                         // FIND END
                         while (
                             end + 1 < currentBeats &&
-                            noteGrid[currentRow][end + 1].active &&
-                            noteGrid[currentRow][end + 1].continuation
+                            noteGrid[currentRow][end + 1].isActive() &&
+                            noteGrid[currentRow][end + 1].isContinuation()
                         ) {
                             end++;
                         }
@@ -609,8 +605,8 @@ import java.awt.event.MouseMotionAdapter;
                         // CLEAR ONLY THIS NOTE
                         for (int b = start; b <= end; b++) {
 
-                            noteGrid[currentRow][b].active = false;
-                            noteGrid[currentRow][b].continuation = false;
+                            noteGrid[currentRow][b].setActive(false);
+                            noteGrid[currentRow][b].setContinuation(false);
                         }
 
                         refreshRowColors(currentRow);
@@ -623,8 +619,8 @@ import java.awt.event.MouseMotionAdapter;
                     // CREATE NEW NOTE
                     NoteCell cell = noteGrid[currentRow][currentBeat];
 
-                    cell.active = true;
-                    cell.continuation = false;
+                    cell.setActive(true);
+                    cell.setContinuation(false);
 
                     refreshRowColors(currentRow);
                 }
@@ -648,9 +644,9 @@ import java.awt.event.MouseMotionAdapter;
 
                         NoteCell cell = noteGrid[currentRow][b];
 
-                        cell.active = true;
+                        cell.setActive(true);
 
-                        cell.continuation = (b != dragStartBeat);
+                        cell.setContinuation ((b != dragStartBeat));
                     }
 
                     refreshRowColors(currentRow);
@@ -681,7 +677,7 @@ import java.awt.event.MouseMotionAdapter;
 
             JCheckBox box = checkBoxGrid[row][beat];
 
-            if (!cell.active) {
+            if (!cell.isActive()) {
 
                 box.setSelected(false);
 
@@ -746,7 +742,7 @@ import java.awt.event.MouseMotionAdapter;
 
                 NoteCell cell = noteGrid[row][beat];
 
-                if (cell.active && !cell.continuation) {
+                if (cell.isActive() && !cell.isContinuation()) {
 
                     int duration = 1;
 
@@ -754,8 +750,8 @@ import java.awt.event.MouseMotionAdapter;
 
                     while (
                         next < currentBeats &&
-                        noteGrid[row][next].active &&
-                        noteGrid[row][next].continuation
+                        noteGrid[row][next].isActive() &&
+                        noteGrid[row][next].isContinuation()
                     ) {
 
                         duration++;
@@ -831,7 +827,7 @@ import java.awt.event.MouseMotionAdapter;
                         NoteCell cell = noteGrid[row][beat];
 
                         // START NOTE ONLY
-                        if (cell.active && !cell.continuation) {
+                        if (cell.isActive() && !cell.isContinuation()) {
 
                             int duration = 1;
 
@@ -840,8 +836,8 @@ import java.awt.event.MouseMotionAdapter;
                             // COUNT CONTINUATIONS
                             while (
                                 nextBeat < currentBeats &&
-                                noteGrid[row][nextBeat].active &&
-                                noteGrid[row][nextBeat].continuation
+                                noteGrid[row][nextBeat].isActive() &&
+                                noteGrid[row][nextBeat].isContinuation()
                             ) {
 
                                 duration++;
@@ -926,7 +922,7 @@ import java.awt.event.MouseMotionAdapter;
                 for (int beat = 0; beat < currentBeats; beat++) {
 
                     data[row][beat] =
-                        noteGrid[row][beat].active;
+                        noteGrid[row][beat].isActive();
                 }
             }
 
@@ -943,7 +939,7 @@ import java.awt.event.MouseMotionAdapter;
                 for (int beat = 0; beat < currentBeats; beat++) {
 
                     data[row][beat] =
-                        noteGrid[row][beat].continuation;
+                        noteGrid[row][beat].isContinuation();
                 }
             }
 
@@ -993,11 +989,9 @@ import java.awt.event.MouseMotionAdapter;
 
                 for (int beat = 0; beat < currentBeats; beat++) {
 
-                    noteGrid[row][beat].active =
-                        active[row][beat];
+                    noteGrid[row][beat].setActive(active[row][beat]);
 
-                    noteGrid[row][beat].continuation =
-                        continuation[row][beat];
+                    noteGrid[row][beat].setContinuation(continuation[row][beat]);
                 }
 
                 refreshRowColors(row);
@@ -1006,8 +1000,8 @@ import java.awt.event.MouseMotionAdapter;
         
         private void clearRow(int row) {
             for (int beat = 0; beat < currentBeats; beat++) {
-                noteGrid[row][beat].active = false;
-                noteGrid[row][beat].continuation = false;
+                noteGrid[row][beat].setActive(false);
+                noteGrid[row][beat].setContinuation(false);
             }
         }
         

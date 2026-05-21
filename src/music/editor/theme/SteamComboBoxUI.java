@@ -2,8 +2,10 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package music.editor;
+package music.editor.theme;
 
+import music.editor.theme.SteamScrollBarUI;
+import music.editor.theme.SteamColors;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
