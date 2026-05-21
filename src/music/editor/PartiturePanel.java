@@ -78,6 +78,7 @@ class PartiturePanel extends JPanel implements SteamColors{
 
         addNewInstrument();
     }
+    
     private void addNewInstrument() {
 
         InstrumentPanel ip = new InstrumentPanel(instruments.size() + 1, this);

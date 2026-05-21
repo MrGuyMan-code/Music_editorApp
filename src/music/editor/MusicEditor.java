@@ -216,7 +216,7 @@ public class MusicEditor implements SteamColors{
         scrollContent.repaint();
     }
     
-        private void importProjectFile() {
+    private void importProjectFile() {
 
             try {
 

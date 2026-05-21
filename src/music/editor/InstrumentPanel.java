@@ -7,6 +7,7 @@ package music.editor;
 import music.editor.theme.SteamComboBoxUI;
 import music.editor.theme.SteamColors;
 import music.editor.grid.NoteCell;
+import music.editor.grid.NoteGrid;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridLayout;
@@ -47,7 +48,7 @@ import java.awt.event.MouseMotionAdapter;
         private JPanel mainPanel;
         private ArrayList<JCheckBox> checkboxList; // Grid of checkboxes (rows x beats)
         
-        private NoteCell[][] noteGrid;
+        private NoteGrid noteGrid;
         private JCheckBox[][] checkBoxGrid;
         
         // MIDI components for playback
@@ -474,10 +475,10 @@ import java.awt.event.MouseMotionAdapter;
             for (int row = 0; row < 7; row++) {
 
                 for (int beat = 0; beat < currentBeats; beat++) {
-
-                    noteGrid[row][beat].setActive(false);
-
-                    noteGrid[row][beat].setContinuation(false);
+                    
+                    noteGrid.setActive(row, beat, false);
+                    
+                    noteGrid.setContinuation(row, beat, false);
 
                     updateCellVisual(row, beat, 1);
                 }
@@ -492,14 +493,11 @@ import java.awt.event.MouseMotionAdapter;
             }
 
             GridLayout grid = new GridLayout(7, beats);
-
             grid.setVgap(2);
             grid.setHgap(2);
 
             mainPanel = new JPanel(grid);
-            
             mainPanel.setBackground(steamDark);
-            
             mainPanel.setBorder(
                 BorderFactory.createTitledBorder(
                     BorderFactory.createLineBorder(steamBorder),
@@ -510,161 +508,92 @@ import java.awt.event.MouseMotionAdapter;
                     creamText
                 )
             );
-            
-            
 
-            noteGrid = new NoteCell[7][beats];
+            // ✅ ONLY ONE SOURCE OF TRUTH
+            if (noteGrid == null) {
+                noteGrid = new NoteGrid(beats);
+            } else {
+                noteGrid.resize(beats);
+            }
 
             checkBoxGrid = new JCheckBox[7][beats];
 
             for (int row = 0; row < 7; row++) {
-
                 for (int beat = 0; beat < beats; beat++) {
 
-                    noteGrid[row][beat] = new NoteCell();
-
                     JCheckBox box = new JCheckBox() {
-
                         @Override
                         protected void paintComponent(java.awt.Graphics g) {
-
                             g.setColor(getBackground());
-
-                            g.fillRect(
-                                0,
-                                0,
-                                getWidth(),
-                                getHeight()
-                            );
+                            g.fillRect(0, 0, getWidth(), getHeight());
                         }
                     };
-                    
+
                     box.setOpaque(true);
-                    
-                    
-                    box.setBorder(
-                        BorderFactory.createLineBorder(
-                            new Color(70, 90, 110)
-                        )
-                    );
-
-                    box.setBackground(
-                        //new Color(25, 35, 45)
-                            new Color(45, 65, 85)
-                        //    new Color(52, 73, 94)            
-                    );
-
+                    box.setBorder(BorderFactory.createLineBorder(new Color(70, 90, 110)));
+                    box.setBackground(new Color(45, 65, 85));
                     box.setFocusPainted(false);
-
                     box.setContentAreaFilled(false);
-
-                    box.setPreferredSize(
-                        new Dimension(24, 24)
-                    );
+                    box.setPreferredSize(new Dimension(24, 24));
 
                     final int currentRow = row;
                     final int currentBeat = beat;
 
-                box.addMouseListener(new MouseAdapter() {
+                    box.addMouseListener(new MouseAdapter() {
 
-                @Override
-                public void mousePressed(MouseEvent e) {
+                        @Override
+                        public void mousePressed(MouseEvent e) {
 
-                    if (e.getButton() != MouseEvent.BUTTON1) {
-                        return;
-                    }
+                            if (e.getButton() != MouseEvent.BUTTON1) return;
 
-                    dragging = true;
+                            dragging = true;
+                            dragStartRow = currentRow;
+                            dragStartBeat = currentBeat;
 
-                    dragStartRow = currentRow;
-                    dragStartBeat = currentBeat;
+                            // ✅ USE NOTEGRID API ONLY
+                            if (noteGrid.isActive(currentRow, currentBeat)) {
 
-                    // CLICKED EXISTING NOTE -> REMOVE WHOLE NOTE
-                    if (noteGrid[currentRow][currentBeat].isActive()) {
+                                noteGrid.clearNote(currentRow, currentBeat);
+                                refreshRowColors(currentRow);
 
-                        int start = currentBeat;
-                        int end = currentBeat;
+                                dragging = false;
+                                return;
+                            }
 
-                        // FIND START
-                        while (
-                            start > 0 &&
-                            noteGrid[currentRow][start].isContinuation()
-                        ) {
-                            start--;
+                            noteGrid.setActive(currentRow, currentBeat, true);
+                            noteGrid.setContinuation(currentRow, currentBeat, false);
+
+                            refreshRowColors(currentRow);
                         }
 
-                        // FIND END
-                        while (
-                            end + 1 < currentBeats &&
-                            noteGrid[currentRow][end + 1].isActive() &&
-                            noteGrid[currentRow][end + 1].isContinuation()
-                        ) {
-                            end++;
+                        @Override
+                        public void mouseEntered(MouseEvent e) {
+
+                            if (!dragging) return;
+                            if (currentRow != dragStartRow) return;
+                            if (currentBeat < dragStartBeat) return;
+
+                            for (int b = dragStartBeat; b <= currentBeat; b++) {
+
+                                noteGrid.setActive(currentRow, b, true);
+                                noteGrid.setContinuation(currentRow, b, (b != dragStartBeat));
+                            }
+
+                            refreshRowColors(currentRow);
                         }
 
-                        // CLEAR ONLY THIS NOTE
-                        for (int b = start; b <= end; b++) {
-
-                            noteGrid[currentRow][b].setActive(false);
-                            noteGrid[currentRow][b].setContinuation(false);
+                        @Override
+                        public void mouseReleased(MouseEvent e) {
+                            dragging = false;
                         }
+                    });
 
-                        refreshRowColors(currentRow);
-
-                        dragging = false;
-
-                        return;
-                    }
-
-                    // CREATE NEW NOTE
-                    NoteCell cell = noteGrid[currentRow][currentBeat];
-
-                    cell.setActive(true);
-                    cell.setContinuation(false);
-
-                    refreshRowColors(currentRow);
-                }
-
-                @Override
-                public void mouseEntered(MouseEvent e) {
-
-                    if (!dragging) {
-                        return;
-                    }
-
-                    if (currentRow != dragStartRow) {
-                        return;
-                    }
-
-                    if (currentBeat < dragStartBeat) {
-                        return;
-                    }
-
-                    for (int b = dragStartBeat; b <= currentBeat; b++) {
-
-                        NoteCell cell = noteGrid[currentRow][b];
-
-                        cell.setActive(true);
-
-                        cell.setContinuation ((b != dragStartBeat));
-                    }
-
-                    refreshRowColors(currentRow);
-                }
-                    @Override
-                    public void mouseReleased(MouseEvent e) {
-
-                        dragging = false;
-                    }
-                });
                     checkBoxGrid[row][beat] = box;
-
                     mainPanel.add(box);
                 }
             }
 
             background.add(BorderLayout.CENTER, mainPanel);
-
             background.revalidate();
             background.repaint();
 
@@ -673,18 +602,15 @@ import java.awt.event.MouseMotionAdapter;
         
         private void updateCellVisual(int row, int beat, int duration) {
 
-            NoteCell cell = noteGrid[row][beat];
+            //NoteCell cell = noteGrid[row][beat];
 
             JCheckBox box = checkBoxGrid[row][beat];
 
-            if (!cell.isActive()) {
+            if (!noteGrid.isActive(row, beat)) {
 
                 box.setSelected(false);
 
-                box.setBackground(
-                    //new Color(40, 40, 40)
-                    new Color(45, 65, 85)
-                );
+                box.setBackground(new Color(45, 65, 85));
 
                 return;
             }
@@ -712,9 +638,7 @@ import java.awt.event.MouseMotionAdapter;
             red = Math.min(255, Math.max(0, red));
             green = Math.min(255, Math.max(0, green));
 
-            box.setBackground(
-                new Color(red, green, 40)
-            );
+            box.setBackground(new Color(red, green, 40));
         }
         
         // Regenerates the grid with new beat count from text field
@@ -740,32 +664,21 @@ import java.awt.event.MouseMotionAdapter;
 
             while (beat < currentBeats) {
 
-                NoteCell cell = noteGrid[row][beat];
 
-                if (cell.isActive() && !cell.isContinuation()) {
+                if (noteGrid.isActive(row, beat) && !noteGrid.isContinuation(row, beat)) {
 
                     int duration = 1;
 
                     int next = beat + 1;
 
-                    while (
-                        next < currentBeats &&
-                        noteGrid[row][next].isActive() &&
-                        noteGrid[row][next].isContinuation()
-                    ) {
+                    while (next < currentBeats && noteGrid.isActive(row, next) && noteGrid.isContinuation(row, next)) {
 
                         duration++;
-
                         next++;
                     }
 
                     for (int b = beat; b < beat + duration; b++) {
-
-                        updateCellVisual(
-                            row,
-                            b,
-                            duration
-                        );
+                        updateCellVisual(row,b,duration);
                     }
 
                     beat += duration;
@@ -773,11 +686,7 @@ import java.awt.event.MouseMotionAdapter;
 
                 else {
 
-                    updateCellVisual(
-                        row,
-                        beat,
-                        1
-                    );
+                    updateCellVisual(row,beat,1);
 
                     beat++;
                 }
@@ -824,10 +733,10 @@ import java.awt.event.MouseMotionAdapter;
 
                     while (beat < currentBeats) {
 
-                        NoteCell cell = noteGrid[row][beat];
+                        //NoteCell cell = noteGrid[row][beat];
 
                         // START NOTE ONLY
-                        if (cell.isActive() && !cell.isContinuation()) {
+                        if (noteGrid.isActive(row, beat) && !noteGrid.isContinuation(row, beat)) {
 
                             int duration = 1;
 
@@ -836,8 +745,8 @@ import java.awt.event.MouseMotionAdapter;
                             // COUNT CONTINUATIONS
                             while (
                                 nextBeat < currentBeats &&
-                                noteGrid[row][nextBeat].isActive() &&
-                                noteGrid[row][nextBeat].isContinuation()
+                                noteGrid.isActive(row, nextBeat) &&
+                                noteGrid.isContinuation(row, nextBeat)
                             ) {
 
                                 duration++;
@@ -922,7 +831,7 @@ import java.awt.event.MouseMotionAdapter;
                 for (int beat = 0; beat < currentBeats; beat++) {
 
                     data[row][beat] =
-                        noteGrid[row][beat].isActive();
+                        noteGrid.isActive(row, beat);
                 }
             }
 
@@ -939,7 +848,7 @@ import java.awt.event.MouseMotionAdapter;
                 for (int beat = 0; beat < currentBeats; beat++) {
 
                     data[row][beat] =
-                        noteGrid[row][beat].isContinuation();
+                        noteGrid.isContinuation(row, beat);
                 }
             }
 
@@ -963,46 +872,27 @@ import java.awt.event.MouseMotionAdapter;
         }
 
         public void setCurrentOctaveShift(int shift) {
-
             currentOctaveShift = shift;
-
             octaveCombo.setSelectedIndex(shift + 5);
-
             updateOctave();
         }
 
         public void setCurrentBeats(int beats) {
-
             currentBeats = beats;
-
             beatsTextField.setText("" + beats);
-
             createGrid(beats);
         }
 
-        public void loadNoteData(
-            boolean[][] active,
-            boolean[][] continuation
-        ) {
+        public void loadNoteData(boolean[][] active,boolean[][] continuation) {
+            noteGrid.load(active, continuation);
 
             for (int row = 0; row < 7; row++) {
-
-                for (int beat = 0; beat < currentBeats; beat++) {
-
-                    noteGrid[row][beat].setActive(active[row][beat]);
-
-                    noteGrid[row][beat].setContinuation(continuation[row][beat]);
-                }
-
                 refreshRowColors(row);
             }
         }
         
         private void clearRow(int row) {
-            for (int beat = 0; beat < currentBeats; beat++) {
-                noteGrid[row][beat].setActive(false);
-                noteGrid[row][beat].setContinuation(false);
-            }
+            noteGrid.clearRow(row);
         }
         
         // Public method to start music playback
@@ -1032,5 +922,4 @@ import java.awt.event.MouseMotionAdapter;
             return sequencer.getTempoInBPM();
         }
         
-
     }
