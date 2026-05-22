@@ -64,13 +64,58 @@ import java.awt.event.MouseEvent;
         private String[] soundsNames = {"SI", "LA", "SOL", "FA", "MI", "RE", "DO"};
 
         private int[] instruments = {
-            35, 42, 46, 38, 49, 39, 50,
-            60, 70, 72, 64, 56, 58, 47, 67, 63
+
+            // Piano
+            0, 1, 4,
+
+            // Bass
+            33, 38,
+
+            // Strings
+            40, 48, 50,
+
+            // Choir / Pads
+            52, 54, 89,
+
+            // Synth Leads
+            80, 81, 82, 84,
+
+            // Percussion
+            35, 42, 46, 38, 49,
+            39, 50, 60, 70, 72,
+            64, 56, 58, 47, 67, 63
         };
         
         private PartiturePanel parentPartiture;
 
         private String[] instrumentNames = {
+
+            // Piano
+            "Acoustic Grand Piano (0)",
+            "Bright Piano (1)",
+            "Electric Piano (4)",
+
+            // Bass
+            "Finger Bass (33)",
+            "Synth Bass (38)",
+
+            // Strings
+            "Violin (40)",
+            "String Ensemble (48)",
+            "Synth Strings (50)",
+
+            // Choir / Pads
+            "Choir Aahs (52)",
+            "Synth Voice (54)",
+            "Warm Pad (89)",
+
+            // Synth Leads
+            "Lead Square (80)",
+            "Lead Saw Wave (81)",
+            "Lead Calliope (82)",
+            "Lead Charang (84)",
+
+            // Percussion
             "Bass Drum (35)",
             "Closed Hi-Hat (42)",
             "Open Hi-Hat (46)",
@@ -88,7 +133,6 @@ import java.awt.event.MouseEvent;
             "High Wood Block (67)",
             "Low Wood Block (63)"
         };
-        
         public InstrumentPanel(int id, PartiturePanel parent) {
 
             this.instrumentId = id;
