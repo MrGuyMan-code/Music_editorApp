@@ -28,6 +28,7 @@ public class MusicEditor implements SteamColors{
     private JPanel mainContainer; // Holds all instrument panels in a scrollable area
     private ArrayList<PartiturePanel> partiturePanels; // Collection of all musical instrument panels
     private JFrame theFrame;
+    private volatile boolean stopPlayback = false;
 
     public static void main(String[] args) {
         new MusicEditor().buildGUI();
@@ -159,7 +160,7 @@ public class MusicEditor implements SteamColors{
         globalTopPanel.add(playAllButton);
         
         JButton stopAllButton = new JButton("Stop All");
-        stopAllButton.addActionListener(e -> {for(PartiturePanel pp : partiturePanels) {pp.stopAllInstruments();}});
+        stopAllButton.addActionListener(e -> {stopPlayback = true;  for(PartiturePanel pp : partiturePanels) {pp.stopAllInstruments();}});
         
         styleButton(stopAllButton);
         
@@ -428,12 +429,19 @@ public class MusicEditor implements SteamColors{
     
     private void playAllPartituresSequentially() {
 
+        stopPlayback = false;
+        
         new Thread(() -> {
 
             try {
 
                 for (PartiturePanel pp : partiturePanels) {
 
+                    // STOP REQUESTED
+                    if (stopPlayback) {
+                        break;
+                    }
+                    
                     pp.playAllInstruments();
 
                     Thread.sleep(pp.getDurationMillis());

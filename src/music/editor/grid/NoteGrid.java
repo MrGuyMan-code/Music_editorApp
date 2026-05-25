@@ -87,36 +87,34 @@ public class NoteGrid {
     
     public void resize(int newBeats) {
 
-        int oldBeats = beats;
-
-        NoteCell[][] oldGrid = grid;
-
         NoteCell[][] newGrid =
-            new NoteCell[rows][newBeats];
+            new NoteCell[7][newBeats];
 
-        for (int r = 0; r < rows; r++) {
+        for (int row = 0; row < 7; row++) {
 
-            for (int b = 0; b < newBeats; b++) {
+            for (int beat = 0; beat < newBeats; beat++) {
 
-                // COPY OLD CELL IF IT EXISTS
-                if (b < oldBeats) {
+                newGrid[row][beat] =
+                    new NoteCell();
+            }
+        }
 
-                    newGrid[r][b] =
-                        oldGrid[r][b];
-                }
+        int limit =
+            Math.min(beats, newBeats);
 
-                // OTHERWISE CREATE NEW CELL
-                else {
+        for (int row = 0; row < 7; row++) {
 
-                    newGrid[r][b] =
-                        new NoteCell();
-                }
+            for (int beat = 0; beat < limit; beat++) {
+
+                newGrid[row][beat] =
+                    grid[row][beat];
             }
         }
 
         grid = newGrid;
 
-        beats = newBeats;
+        // ASTA LIPSEȘTE
+        this.beats = newBeats;
     }
     
     public void load(boolean[][] active, boolean[][] continuation) {

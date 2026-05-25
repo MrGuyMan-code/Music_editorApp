@@ -593,53 +593,70 @@ import java.awt.event.MouseEvent;
                     mainPanel.add(box);
                 }
             }
-
+            currentBeats = beats;
+            
             background.add(BorderLayout.CENTER, mainPanel);
+
+            refreshGrid();
+
             background.revalidate();
             background.repaint();
 
-            currentBeats = beats;
+
         }
         
-        private void updateCellVisual(int row, int beat, int duration) {
+        private void updateCellVisual(
+            int row,
+            int beat,
+            int duration
+        ) {
 
-            //NoteCell cell = noteGrid[row][beat];
+            // SAFETY CHECK
+            if (
+                row < 0 ||
+                row >= checkBoxGrid.length ||
+                beat < 0 ||
+                beat >= checkBoxGrid[row].length
+            ) {
+                return;
+            }
 
-            JCheckBox box = checkBoxGrid[row][beat];
+            JCheckBox box =
+                checkBoxGrid[row][beat];
 
             if (!noteGrid.isActive(row, beat)) {
 
                 box.setSelected(false);
 
-                box.setBackground(new Color(45, 65, 85));
+                box.setBackground(
+                    steamLight
+                );
 
                 return;
             }
-            
-            
+
             box.setSelected(true);
 
             box.setOpaque(true);
 
-            // SMOOTH COLOR GRADIENT
+            int cappedDuration =
+                Math.min(duration, 8);
 
-            int red;
-            int green;
+            int red =
+                30 * cappedDuration;
 
-            // LIMIT MAX VISUAL LENGTH
-            int cappedDuration = Math.min(duration, 8);
+            int green =
+                255 - (25 * cappedDuration);
 
-            // MORE LENGTH = MORE RED
-            red = 30 * cappedDuration;
+            red =
+                Math.min(255, Math.max(0, red));
 
-            // MORE LENGTH = LESS GREEN
-            green = 255 - (25 * cappedDuration);
+            green =
+                Math.min(255, Math.max(0, green));
 
-            // CLAMP VALUES
-            red = Math.min(255, Math.max(0, red));
-            green = Math.min(255, Math.max(0, green));
-
-            box.setBackground(new Color(red, green, 40));
+            box.setBackground(
+                new Color(red, green, 40)
+            );
         }
         
         // Regenerates the grid with new beat count from text field
@@ -675,7 +692,7 @@ import java.awt.event.MouseEvent;
 
                 int duration = info.getDuration();
 
-                for (int b = start; b < start + duration; b++) {
+                for (int b = start; b < start + duration && b < currentBeats; b++) {
 
                     updateCellVisual(row, b, duration);
                 }
