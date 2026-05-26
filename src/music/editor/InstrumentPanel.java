@@ -532,11 +532,6 @@ import java.awt.event.MouseEvent;
                         }
                     };
 
-                    box.setOpaque(true);
-                    box.setBorder(BorderFactory.createLineBorder(new Color(70, 90, 110)));
-                    box.setBackground(new Color(45, 65, 85));
-                    box.setFocusPainted(false);
-                    box.setContentAreaFilled(false);
                     box.setPreferredSize(new Dimension(24, 24));
 
                     final int currentRow = row;
@@ -628,9 +623,7 @@ import java.awt.event.MouseEvent;
 
                 box.setSelected(false);
 
-                box.setBackground(
-                    steamLight
-                );
+                box.setBackground(steamLight);
 
                 return;
             }
@@ -654,8 +647,7 @@ import java.awt.event.MouseEvent;
             green =
                 Math.min(255, Math.max(0, green));
 
-            box.setBackground(
-                new Color(red, green, 40)
+            box.setBackground(new Color(red, green, 40)
             );
         }
         

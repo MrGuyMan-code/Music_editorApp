@@ -185,9 +185,7 @@ public class MusicEditor implements SteamColors{
         
         scrollPane.setBorder(null);
 
-        scrollPane.getViewport().setBackground(
-            new Color(27, 40, 56)
-        );
+        scrollPane.getViewport().setBackground(steamDark);
         
         addPartitureButton.addActionListener(e -> {addNewPartiture(scrollContent);});
         

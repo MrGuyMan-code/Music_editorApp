@@ -8,12 +8,10 @@ import music.editor.theme.SteamColors;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.util.ArrayList;
-import javax.sound.midi.Sequence;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 
 /**
  *

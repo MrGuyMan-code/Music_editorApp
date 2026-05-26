@@ -8,14 +8,12 @@ package music.editor.theme;
  *
  * @author desktop
  */
-import music.editor.theme.SteamColors;
-import java.awt.Color;
+
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import javax.swing.JButton;
 import javax.swing.JComponent;
-import javax.swing.JScrollBar;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 
 public class SteamScrollBarUI extends BasicScrollBarUI implements SteamColors {
