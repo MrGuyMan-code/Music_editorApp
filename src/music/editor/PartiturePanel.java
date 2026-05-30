@@ -6,7 +6,6 @@ package music.editor;
 
 import music.editor.theme.SteamColors;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.util.ArrayList;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -18,7 +17,7 @@ import javax.swing.JPanel;
  * @author desktop
  */
 
-class PartiturePanel extends JPanel implements SteamColors{
+public class PartiturePanel extends JPanel implements SteamColors{
     
     
     private ArrayList<InstrumentPanel> instruments;
@@ -43,6 +42,7 @@ class PartiturePanel extends JPanel implements SteamColors{
                 creamText
             )
         );
+        this.setBackground(steamDark);
 
         instrumentsContainer = new JPanel();
         instrumentsContainer.setLayout(new BoxLayout(instrumentsContainer, BoxLayout.Y_AXIS));
@@ -178,7 +178,7 @@ class PartiturePanel extends JPanel implements SteamColors{
         instrumentsContainer.repaint();
     }
 
-    void clearInstruments() {
+    public void clearInstruments() {
         instruments.clear();
 
         instrumentsContainer.removeAll();

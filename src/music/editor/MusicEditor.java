@@ -12,12 +12,8 @@ package music.editor;
 import music.editor.theme.SteamComboBoxUI;
 import music.editor.theme.SteamScrollBarUI;
 import music.editor.theme.SteamColors;
+import music.editor.io.ProjectFileManager;
 import java.awt.BorderLayout;
-import java.awt.Color;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import javax.swing.*;
 
@@ -30,6 +26,8 @@ public class MusicEditor implements SteamColors{
     private JFrame theFrame;
     private volatile boolean stopPlayback = false;
 
+    private ProjectFileManager fileManager;
+    
     public static void main(String[] args) {
         new MusicEditor().buildGUI();
     }
@@ -45,7 +43,7 @@ public class MusicEditor implements SteamColors{
         mainContainer.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         mainContainer.setBackground(steamDark);
         
-        
+        fileManager = new ProjectFileManager(theFrame);
         //The Menu Bar
         JMenuBar menuBar = new JMenuBar();
 
@@ -73,9 +71,12 @@ public class MusicEditor implements SteamColors{
 
         theFrame.setJMenuBar(menuBar);
         
-        exportMidi.addActionListener(e -> exportProjectFile());
+        exportMidi.addActionListener(e -> fileManager.saveProject(partiturePanels));
         
-        importMidi.addActionListener(e -> importProjectFile());
+        importMidi.addActionListener(e -> {
+            fileManager.loadProject(partiturePanels);
+            refreshPartitureView();
+        });
           
         // ===== TOP PANEL: Global controls that affect all instruments =====
         JPanel globalTopPanel = new JPanel();
@@ -220,211 +221,6 @@ public class MusicEditor implements SteamColors{
         scrollContent.repaint();
     }
     
-    private void importProjectFile() {
-
-            try {
-
-                JFileChooser chooser =
-                    new JFileChooser();
-
-                int result =
-                    chooser.showOpenDialog(theFrame);
-
-                if (result != JFileChooser.APPROVE_OPTION) {
-                    return;
-                }
-
-                java.io.File file =
-                    chooser.getSelectedFile();
-
-                ObjectInputStream in =
-                    new ObjectInputStream(
-                        new FileInputStream(file)
-                    );
-
-                // GET SCROLL CONTENT
-                JPanel scrollContent =
-                    (JPanel)
-                    ((JScrollPane) mainContainer.getComponent(1))
-                    .getViewport()
-                    .getView();
-
-                // CLEAR CURRENT PROJECT
-                partiturePanels.clear();
-
-                scrollContent.removeAll();
-
-                int partitureCount =
-                    in.readInt();
-
-                for (
-                    int p = 0;
-                    p < partitureCount;
-                    p++
-                ) {
-
-                    PartiturePanel pp =
-                        new PartiturePanel(p + 1);
-
-                    pp.clearInstruments();
-
-                    int instrumentCount = in.readInt();
-
-                    for (int i = 0; i < instrumentCount; i++) {
-
-                        int instrument = in.readInt();
-
-                        int beats = in.readInt();
-
-                        int octaveShift = in.readInt();
-
-                        boolean[][] active = new boolean[7][beats];
-
-                        boolean[][] continuation = new boolean[7][beats];
-
-                        // READ GRID DATA
-                        for (int row = 0; row < 7; row++) {
-
-                            for (int beat = 0;beat < beats; beat++) {
-
-                                active[row][beat] = in.readBoolean();
-
-                                continuation[row][beat] = in.readBoolean();
-                            }
-                        }
-
-                        // CREATE INSTRUMENT
-                        pp.addLoadedInstrument(
-                            instrument,
-                            beats,
-                            octaveShift,
-                            active,
-                            continuation
-                        );
-                    }
-
-                    pp.setBackground(steamDark);
-                    
-                    partiturePanels.add(pp);
-
-                    scrollContent.add(pp);
-
-                    scrollContent.add(
-                        Box.createVerticalStrut(15)
-                    );
-                }
-
-                in.close();
-
-                scrollContent.revalidate();
-
-                scrollContent.repaint();
-
-                JOptionPane.showMessageDialog(
-                    theFrame,
-                    "Project imported successfully!"
-                );
-            }
-
-            catch (Exception ex) {
-
-                ex.printStackTrace();
-
-                JOptionPane.showMessageDialog(
-                    theFrame,
-                    "Import error: " + ex.getMessage()
-                );
-            }
-        }
-    
-    private void exportProjectFile() {
-
-        try {
-
-            JFileChooser chooser = new JFileChooser();
-
-            int result = chooser.showSaveDialog(theFrame);
-
-            if (result != JFileChooser.APPROVE_OPTION) {
-                return;
-            }
-
-            java.io.File file =
-                chooser.getSelectedFile();
-
-            if (!file.getName().toLowerCase().endsWith(".cbb")) {
-
-                file = new java.io.File(
-                    file.getAbsolutePath() + ".cbb"
-                );
-            }
-
-            ObjectOutputStream out =
-                new ObjectOutputStream(
-                    new FileOutputStream(file)
-                );
-
-            // SAVE PARTITURE COUNT
-            out.writeInt(partiturePanels.size());
-
-            for (PartiturePanel pp : partiturePanels) {
-
-                // SAVE INSTRUMENT COUNT
-                out.writeInt(
-                    pp.getInstruments().size()
-                );
-
-                for (InstrumentPanel ip : pp.getInstruments()) {
-
-                    out.writeInt(ip.getCurrentInstrument());
-
-                    out.writeInt(ip.getCurrentBeats());
-
-                    out.writeInt(ip.getCurrentOctaveShift());
-
-                    boolean[][] active = ip.getActiveData();
-
-                    boolean[][] continuation = ip.getContinuationData();
-
-                    for (int row = 0; row < 7; row++) {
-
-                        for (
-                            int beat = 0;
-                            beat < ip.getCurrentBeats();
-                            beat++
-                        ) {
-
-                            out.writeBoolean(
-                                active[row][beat]
-                            );
-
-                            out.writeBoolean(
-                                continuation[row][beat]
-                            );
-                        }
-                    }
-                }
-            }
-
-            out.close();
-
-            JOptionPane.showMessageDialog(
-                theFrame,
-                "Project exported successfully!"
-            );
-        }
-
-        catch (Exception ex) {
-
-            ex.printStackTrace();
-
-            JOptionPane.showMessageDialog(
-                theFrame,
-                "Export error: " + ex.getMessage()
-            );
-        }
-    }
-    
     private void playAllPartituresSequentially() {
 
         stopPlayback = false;
@@ -452,6 +248,31 @@ public class MusicEditor implements SteamColors{
             }
 
         }).start();
+    }
+    
+    private void refreshPartitureView() {
+
+        JPanel scrollContent =
+            (JPanel)
+            ((JScrollPane)
+                mainContainer.getComponent(1))
+            .getViewport()
+            .getView();
+
+        scrollContent.removeAll();
+
+        for (PartiturePanel pp : partiturePanels) {
+
+            scrollContent.add(pp);
+
+            scrollContent.add(
+                Box.createVerticalStrut(15)
+            );
+        }
+
+        scrollContent.revalidate();
+
+        scrollContent.repaint();
     }
     
     private void setTempoForAll(int bpm) {

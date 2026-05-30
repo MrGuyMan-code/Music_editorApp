@@ -32,7 +32,7 @@ import java.awt.event.MouseEvent;
  * @author desktop
  */
     // Inner class representing a single instrument panel (one instrument's pattern)
-    class InstrumentPanel extends JPanel implements SteamColors{
+    public class InstrumentPanel extends JPanel implements SteamColors{
         
         // Instrument identification and UI components
         private int instrumentId;
