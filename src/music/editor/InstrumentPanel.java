@@ -51,6 +51,10 @@ import java.awt.event.MouseEvent;
         private int currentOctaveShift = 0;
         private int currentBeats = 16; // Number of beats in the pattern
         
+        // Constants
+        private static final int NOTE_ROWS = 7;
+        private static final int MAX_BEATS = 64;
+        
         // UI controls
         private JTextField beatsTextField;
         private JComboBox<String> instrumentCombo;
@@ -337,7 +341,7 @@ import java.awt.event.MouseEvent;
 
            // NOTES PANEL
 
-           JPanel notesPanel = new JPanel(new GridLayout(7, 1, 5, 5));
+           JPanel notesPanel = new JPanel(new GridLayout(NOTE_ROWS , 1, 5, 5));
 
            notesPanel.setBackground(steamDark);
 
@@ -358,7 +362,7 @@ import java.awt.event.MouseEvent;
                )
            );
 
-           for (int i = 0; i < 7; i++) {
+           for (int i = 0; i < NOTE_ROWS; i++) {
 
                JLabel noteLabel =
                    new JLabel(
@@ -482,7 +486,7 @@ import java.awt.event.MouseEvent;
         
         private void refreshGrid() {
 
-            for (int row = 0; row < 7; row++) {
+            for (int row = 0; row < NOTE_ROWS; row++) {
 
                 refreshRowVisuals(row);
             }
@@ -495,7 +499,7 @@ import java.awt.event.MouseEvent;
                 background.remove(mainPanel);
             }
 
-            GridLayout grid = new GridLayout(7, beats);
+            GridLayout grid = new GridLayout(NOTE_ROWS, beats);
             grid.setVgap(2);
             grid.setHgap(2);
 
@@ -519,9 +523,9 @@ import java.awt.event.MouseEvent;
                 noteGrid.resize(beats);
             }
 
-            checkBoxGrid = new JCheckBox[7][beats];
+            checkBoxGrid = new JCheckBox[NOTE_ROWS][beats];
 
-            for (int row = 0; row < 7; row++) {
+            for (int row = 0; row < NOTE_ROWS; row++) {
                 for (int beat = 0; beat < beats; beat++) {
 
                     JCheckBox box = new JCheckBox() {
@@ -659,8 +663,8 @@ import java.awt.event.MouseEvent;
                     JOptionPane.showMessageDialog(this, "Number of beats must be at least 1");
                     return;
                 }
-                if (beats > 64) {
-                    JOptionPane.showMessageDialog(this, "Number of beats cannot exceed 64");
+                if (beats > MAX_BEATS) {
+                    JOptionPane.showMessageDialog(this, "Number of beats cannot exceed " + MAX_BEATS);
                     return;
                 }
                 createGrid(beats);
@@ -702,9 +706,9 @@ import java.awt.event.MouseEvent;
         public boolean[][] getActiveData() {
 
             boolean[][] data =
-                new boolean[7][currentBeats];
+                new boolean[NOTE_ROWS][currentBeats];
 
-            for (int row = 0; row < 7; row++) {
+            for (int row = 0; row < NOTE_ROWS; row++) {
 
                 for (int beat = 0; beat < currentBeats; beat++) {
 
@@ -717,9 +721,9 @@ import java.awt.event.MouseEvent;
 
         public boolean[][] getContinuationData() {
 
-            boolean[][] data = new boolean[7][currentBeats];
+            boolean[][] data = new boolean[NOTE_ROWS][currentBeats];
 
-            for (int row = 0; row < 7; row++) {
+            for (int row = 0; row < NOTE_ROWS; row++) {
                 for (int beat = 0; beat < currentBeats; beat++) {
                     data[row][beat] = noteGrid.isContinuation(row, beat);
                 }

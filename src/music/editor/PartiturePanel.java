@@ -105,6 +105,10 @@ public class PartiturePanel extends JPanel implements SteamColors{
     
     public long getDurationMillis() {
 
+        if (instruments.isEmpty()) {
+            return 0;
+        }
+        
         int maxBeats = 0;
 
         for(InstrumentPanel ip : instruments) {

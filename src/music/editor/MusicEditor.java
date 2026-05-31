@@ -25,6 +25,7 @@ public class MusicEditor implements SteamColors{
     private ArrayList<PartiturePanel> partiturePanels; // Collection of all musical instrument panels
     private JFrame theFrame;
     private volatile boolean stopPlayback = false;
+    private Thread playbackThread;
 
     private ProjectFileManager fileManager;
     
@@ -161,7 +162,8 @@ public class MusicEditor implements SteamColors{
         globalTopPanel.add(playAllButton);
         
         JButton stopAllButton = new JButton("Stop All");
-        stopAllButton.addActionListener(e -> {stopPlayback = true;  for(PartiturePanel pp : partiturePanels) {pp.stopAllInstruments();}});
+
+        stopAllButton.addActionListener(e -> stopAllPlayback());
         
         styleButton(stopAllButton);
         
@@ -223,31 +225,66 @@ public class MusicEditor implements SteamColors{
     
     private void playAllPartituresSequentially() {
 
+        if (playbackThread != null && playbackThread.isAlive()) {
+            return;
+        }
+
+        
         stopPlayback = false;
         
-        new Thread(() -> {
+        playbackThread = new Thread(() -> {
 
             try {
 
                 for (PartiturePanel pp : partiturePanels) {
 
-                    // STOP REQUESTED
                     if (stopPlayback) {
                         break;
                     }
                     
+                    if (pp.getInstrumentCount() == 0) {
+                        continue;
+                    }
+
                     pp.playAllInstruments();
 
-                    Thread.sleep(pp.getDurationMillis());
+                    Thread.sleep(
+                        pp.getDurationMillis()
+                    );
 
                     pp.stopAllInstruments();
                 }
 
-            } catch (Exception ex) {
+            }
+            catch (InterruptedException ex) {
+
+                // Stop All pressed
+            }
+            catch (Exception ex) {
+
                 ex.printStackTrace();
             }
+            finally {
 
-        }).start();
+                playbackThread = null;
+            }
+
+        });
+        
+        playbackThread.start();
+    }
+    
+    private void stopAllPlayback() {
+
+        stopPlayback = true;
+
+        if (playbackThread != null) {
+            playbackThread.interrupt();
+        }
+
+        for (PartiturePanel pp : partiturePanels) {
+            pp.stopAllInstruments();
+        }
     }
     
     private void refreshPartitureView() {
